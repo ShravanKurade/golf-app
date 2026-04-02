@@ -14,6 +14,7 @@ function Dashboard() {
 
   const [charities, setCharities] = useState([]);
   const [selectedCharity, setSelectedCharity] = useState("");
+  const [charityPercent, setCharityPercent] = useState(10);
 
   // 🔥 Fetch scores
   const fetchScores = async () => {
@@ -30,7 +31,7 @@ function Dashboard() {
     setScores(data || []);
   };
 
-  // 🔥 Fetch history (LIMIT 5)
+  // 🔥 Fetch history
   const fetchHistory = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -80,7 +81,6 @@ function Dashboard() {
     setCharities(data || []);
   };
 
-  // 🔥 Initial load
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -106,9 +106,7 @@ function Dashboard() {
       return;
     }
 
-    if (!input) return;
-
-    if (input < 1 || input > 45) {
+    if (!input || input < 1 || input > 45) {
       alert("Score must be between 1 and 45");
       return;
     }
@@ -137,7 +135,7 @@ function Dashboard() {
     fetchScores();
   };
 
-  // 💳 PAYMENT (🔥 FIXED)
+  // 💳 Payment (Demo)
   const handlePayment = async () => {
     alert("Redirecting to payment... 💳");
 
@@ -147,30 +145,13 @@ function Dashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
+      await supabase
         .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!profile) {
-        await supabase.from("profiles").insert([
-          {
-            id: user.id,
-            subscription_status: "active",
-            role: "user",
-          },
-        ]);
-      } else {
-        await supabase
-          .from("profiles")
-          .update({ subscription_status: "active" })
-          .eq("id", user.id);
-      }
+        .update({ subscription_status: "active" })
+        .eq("id", user.id);
 
       setSubscription("active");
-
-      fetchProfile(); // 🔥 IMPORTANT FIX
+      fetchProfile();
     }, 2000);
   };
 
@@ -191,6 +172,11 @@ function Dashboard() {
       return;
     }
 
+    if (charityPercent < 10) {
+      alert("Minimum charity is 10%");
+      return;
+    }
+
     const drawNumbers = Array.from({ length: 5 }, () =>
       Math.floor(Math.random() * 45) + 1
     );
@@ -203,10 +189,21 @@ function Dashboard() {
     });
 
     let message = "";
-    if (matchCount === 5) message = "🥇 Jackpot";
-    else if (matchCount === 4) message = "🥈 4 Matches";
-    else if (matchCount === 3) message = "🥉 3 Matches";
-    else message = "😢 No Win";
+    let prize = "";
+
+    if (matchCount === 5) {
+      message = "🥇 Jackpot";
+      prize = "₹5000";
+    } else if (matchCount === 4) {
+      message = "🥈 4 Matches";
+      prize = "₹2000";
+    } else if (matchCount === 3) {
+      message = "🥉 3 Matches";
+      prize = "₹500";
+    } else {
+      message = "😢 No Win";
+      prize = "₹0";
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -215,14 +212,14 @@ function Dashboard() {
         user_id: user.id,
         numbers: drawNumbers.join(", "),
         matches: matchCount,
-        result: message + ` | Charity: ${selectedCharity}`,
+        result: `${message} | Prize: ${prize} | Charity: ${selectedCharity} (${charityPercent}%)`,
       },
     ]);
 
     fetchHistory();
     fetchLatestDraw();
 
-    alert("Draw completed 🎯");
+    alert("🎯 You have entered the Monthly Draw!");
   };
 
   return (
@@ -242,12 +239,7 @@ function Dashboard() {
           Logout
         </button>
 
-        {/* Premium */}
-        <div className="bg-gray-100 p-3 rounded mb-3">
-          <p className="font-semibold">Premium Plan 🚀</p>
-          <p className="text-sm">Unlimited access + full features</p>
-        </div>
-
+        {/* Subscription */}
         <button
           className={`px-4 py-2 rounded w-full mb-4 ${
             subscription === "active"
@@ -262,8 +254,7 @@ function Dashboard() {
         </button>
 
         {/* Latest Draw */}
-        <h3 className="mt-4 font-bold">🎯 Latest Draw</h3>
-
+        <h3 className="font-bold">🎯 Latest Draw</h3>
         {latestDraw ? (
           <div className="bg-yellow-100 p-3 rounded mt-2">
             <p><b>Numbers:</b> {latestDraw.numbers}</p>
@@ -288,9 +279,16 @@ function Dashboard() {
           ))}
         </select>
 
+        <input
+          type="number"
+          className="border p-2 rounded w-full mt-2"
+          placeholder="Charity % (min 10)"
+          value={charityPercent}
+          onChange={(e) => setCharityPercent(e.target.value)}
+        />
+
         {/* Add Score */}
         <h3 className="font-semibold mt-4">Add Score</h3>
-
         <div className="flex gap-2 mt-2">
           <input
             type="number"
@@ -299,7 +297,6 @@ function Dashboard() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
-
           <button
             className="bg-green-500 text-white px-4 rounded"
             onClick={addScore}
@@ -317,12 +314,12 @@ function Dashboard() {
           ))}
         </ul>
 
-        {/* Run Draw */}
+        {/* Draw */}
         <button
           className="bg-purple-500 text-white px-4 py-2 rounded mt-4 w-full"
           onClick={runDraw}
         >
-          Run Draw 🎯
+          Enter Monthly Draw 🎯
         </button>
 
         {/* History */}

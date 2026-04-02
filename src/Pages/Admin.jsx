@@ -18,39 +18,25 @@ function Admin() {
       .order("id", { ascending: false });
 
     if (error) {
-      console.log("Draw error:", error);
+      console.log("Draw fetch error:", error);
       return;
     }
 
     setDraws(data || []);
   };
 
-  // 🔥 Fetch users count
+  // 🔥 Users count
   const fetchUsersCount = async () => {
-    const { count, error } = await supabase
+    const { count } = await supabase
       .from("profiles")
       .select("*", { count: "exact", head: true });
-
-    if (error) {
-      console.log("User count error:", error);
-      return;
-    }
 
     setUsersCount(count || 0);
   };
 
-  // 🔥 FINAL FIX: Subscribers + Revenue
+  // 🔥 Subscribers + Revenue
   const fetchSubscribers = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*");
-
-    if (error) {
-      console.log("Subscriber error:", error);
-      return;
-    }
-
-    console.log("PROFILE DATA:", data); // debug
+    const { data } = await supabase.from("profiles").select("*");
 
     const activeUsers = data?.filter(
       (u) => u.subscription_status === "active"
@@ -62,26 +48,85 @@ function Admin() {
     setRevenue(total * 99);
   };
 
-  // 🔥 ADMIN DRAW
+  // 🔥 FINAL ADMIN DRAW (FULL FIX)
   const runDraw = async () => {
-    const numbers = Array.from({ length: 5 }, () =>
+    const drawNumbers = Array.from({ length: 5 }, () =>
       Math.floor(Math.random() * 45) + 1
     );
 
-    const { error } = await supabase.from("draws").insert([
-      {
-        numbers: numbers.join(", "),
-        result: "Draw Generated 🎯",
-      },
-    ]);
+    const { data: scores, error } = await supabase
+      .from("scores")
+      .select("*");
 
+    console.log("SCORES ADMIN:", scores, error);
+
+    // ❌ Error handling
     if (error) {
-      console.log(error);
-      alert("Draw failed ❌");
+      alert("Error fetching scores ❌");
       return;
     }
 
-    alert("Draw Created 🎯");
+    // ❌ Null check only (length check removed)
+    if (!scores) {
+      alert("No scores found ❌");
+      return;
+    }
+
+    // 🔥 Group by user
+    const userMap = {};
+    scores.forEach((s) => {
+      if (!userMap[s.user_id]) {
+        userMap[s.user_id] = [];
+      }
+      userMap[s.user_id].push(s.score);
+    });
+
+    const validUsers = Object.keys(userMap).filter(
+      (userId) => userMap[userId].length > 0
+    );
+
+    if (validUsers.length === 0) {
+      alert("No valid users for draw ❌");
+      return;
+    }
+
+    // 🔥 Process draw
+    for (let userId of validUsers) {
+      const userNumbers = userMap[userId];
+
+      let matchCount = 0;
+      userNumbers.forEach((num) => {
+        if (drawNumbers.includes(num)) matchCount++;
+      });
+
+      let result = "😢 No Win";
+      let prize = "₹0";
+
+      if (matchCount === 5) {
+        result = "🥇 Jackpot";
+        prize = "₹5000";
+      } else if (matchCount === 4) {
+        result = "🥈 4 Matches";
+        prize = "₹2000";
+      } else if (matchCount === 3) {
+        result = "🥉 3 Matches";
+        prize = "₹500";
+      }
+
+      await supabase.from("draws").insert([
+        {
+          user_id: userId,
+          numbers: drawNumbers.join(", "),
+          matches: matchCount,
+          result: `${result} | Prize: ${prize}`,
+        },
+      ]);
+    }
+
+    alert("🎯 Monthly Draw Completed!");
+
+    // 🔥 Refresh UI
+    await new Promise((res) => setTimeout(res, 700));
     fetchDraws();
   };
 
@@ -94,17 +139,11 @@ function Admin() {
       return;
     }
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .maybeSingle();
-
-    if (error) {
-      console.log("Role error:", error);
-      setLoading(false);
-      return;
-    }
 
     if (data?.role === "admin") {
       setIsAdmin(true);
@@ -125,40 +164,29 @@ function Admin() {
     checkAdmin();
   }, []);
 
-  // 🔥 DELETE USER DATA
+  // 🔥 Delete user data
   const deleteUserData = async (user_id) => {
     if (!window.confirm("Delete this user's data?")) return;
 
-    try {
-      await Promise.all([
-        supabase.from("scores").delete().eq("user_id", user_id),
-        supabase.from("draws").delete().eq("user_id", user_id),
-      ]);
+    await Promise.all([
+      supabase.from("scores").delete().eq("user_id", user_id),
+      supabase.from("draws").delete().eq("user_id", user_id),
+    ]);
 
-      alert("User data deleted ✅");
+    alert("User data deleted ✅");
 
-      fetchDraws();
-      fetchUsersCount();
-      fetchSubscribers();
-    } catch (err) {
-      console.log("Delete error:", err);
-      alert("Delete failed ❌");
-    }
+    fetchDraws();
+    fetchUsersCount();
+    fetchSubscribers();
   };
 
-  // ⏳ Loading
   if (loading) {
-    return (
-      <h1 className="text-center mt-10 text-gray-500 text-xl">
-        Loading...
-      </h1>
-    );
+    return <h1 className="text-center mt-10">Loading...</h1>;
   }
 
-  // 🔐 Access control
   if (!isAdmin) {
     return (
-      <h1 className="text-center mt-10 text-red-500 text-xl">
+      <h1 className="text-center mt-10 text-red-500">
         Access Denied ❌
       </h1>
     );
@@ -172,15 +200,13 @@ function Admin() {
           Admin Dashboard 🧑‍💻
         </h1>
 
-        {/* Run Draw */}
         <button
-          className="bg-purple-500 text-white px-4 py-2 rounded mb-4 hover:bg-purple-600"
+          className="bg-purple-500 text-white px-4 py-2 rounded mb-4"
           onClick={runDraw}
         >
-          Run Draw 🎯
+          Run Monthly Draw 🎯
         </button>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 
           <div className="bg-blue-100 p-4 rounded">
@@ -205,24 +231,23 @@ function Admin() {
 
         </div>
 
-        {/* Draw List */}
         <h2 className="font-bold mb-2">🎯 All Draws</h2>
 
         {draws.length === 0 ? (
-          <p className="text-gray-500">No draws yet</p>
+          <p>No draws yet</p>
         ) : (
           <ul className="space-y-2">
             {draws.map((d) => (
               <li
                 key={d.id}
-                className="bg-gray-50 p-2 rounded flex justify-between items-center"
+                className="bg-gray-50 p-2 rounded flex justify-between"
               >
                 <span>
-                  🎯 {d.numbers} | {d.result}
+                  🎯 {d.numbers} | Matches: {d.matches} | {d.result}
                 </span>
 
                 <button
-                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                  className="bg-red-500 text-white px-3 py-1 rounded"
                   onClick={() => deleteUserData(d.user_id)}
                 >
                   Delete ❌
