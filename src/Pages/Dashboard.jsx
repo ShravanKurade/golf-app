@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { supabase } from "../supabase";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -268,11 +269,20 @@ const uploadProof = async (drawId, file) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow">
+<div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">     
+<motion.div
+  initial={{ opacity: 0, y: 50 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5 }}
+  className="max-w-2xl mx-auto bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-white/20"
+></motion.div>
+<h1 className="text-3xl font-bold text-white text-center">
+  🎯 Your Golf Dashboard
+</h1>
 
-        <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-
+<p className="text-white text-center mb-4">
+  Play Golf. Win Rewards. Change Lives ❤️
+</p>
         {/* Logout */}
         <button
           className="bg-red-500 text-white px-4 py-2 rounded mb-4"
@@ -286,11 +296,11 @@ const uploadProof = async (drawId, file) => {
 
         {/* Subscription */}
         <button
-          className={`px-4 py-2 rounded w-full mb-4 ${
-            subscription === "active"
-              ? "bg-green-500"
-              : "bg-blue-500"
-          } text-white`}
+          className={`px-4 py-2 rounded-xl text-white shadow-lg transition transform hover:scale-105 ${
+  subscription === "active"
+    ? "bg-green-500"
+    : "bg-gradient-to-r from-pink-500 to-purple-500 hover:shadow-pink-500/50"
+}`}
           onClick={handlePayment}
         >
           {subscription === "active"
@@ -312,7 +322,7 @@ const uploadProof = async (drawId, file) => {
         {/* Charity */}
         <h3 className="font-semibold mt-4">Select Charity ❤️</h3>
         <select
-          className="border p-2 rounded w-full"
+          className="bg-white/20 backdrop-blur-md border border-white/30 text-white p-2 rounded w-full"
           value={selectedCharity}
           onChange={(e) => setSelectedCharity(e.target.value)}
         >
