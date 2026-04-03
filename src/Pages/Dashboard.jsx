@@ -283,10 +283,15 @@ function Dashboard() {
           value={selectedCharity}
           onChange={(e) => setSelectedCharity(e.target.value)}
         >
-          <option value="">Choose charity</option>
-          {charities.map((c) => (
-            <option key={c.id} value={c.name}>{c.name}</option>
-          ))}
+          <option value="" className="text-black">
+  Choose charity
+</option>
+
+{charities.map((c) => (
+  <option key={c.id} value={c.name} className="text-black">
+    {c.name}
+  </option>
+))}
         </select>
 
         <input
