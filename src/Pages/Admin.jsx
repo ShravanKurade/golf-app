@@ -163,7 +163,19 @@ function Admin() {
   useEffect(() => {
     checkAdmin();
   }, []);
+// ✅ VERIFY WINNER
+const verifyWinner = async (id, status) => {
+  await supabase
+    .from("draws")
+    .update({
+      verification_status: status,
+      payment_status: status === "approved" ? "paid" : "rejected"
+    })
+    .eq("id", id);
 
+  alert("Updated ✅");
+  fetchDraws();
+};
   // 🔥 Delete user data
   const deleteUserData = async (user_id) => {
     if (!window.confirm("Delete this user's data?")) return;
@@ -242,10 +254,35 @@ function Admin() {
                 key={d.id}
                 className="bg-gray-50 p-2 rounded flex justify-between"
               >
-                <span>
-                  🎯 {d.numbers} | Matches: {d.matches} | {d.result}
-                </span>
+                <div>
+  <span>
+    🎯 {d.numbers} | Matches: {d.matches} | {d.result}
+    <br />
+    Status: {d.verification_status || "pending"}
+  </span>
 
+  <div className="mt-2">
+    {d.proof_url && (
+      <a href={d.proof_url} target="_blank" rel="noreferrer">
+        View 📸
+      </a>
+    )}
+
+    <button
+      className="bg-green-500 text-white px-2 ml-2"
+      onClick={() => verifyWinner(d.id, "approved")}
+    >
+      Approve
+    </button>
+
+    <button
+      className="bg-red-500 text-white px-2 ml-2"
+      onClick={() => verifyWinner(d.id, "rejected")}
+    >
+      Reject
+    </button>
+  </div>
+</div>
                 <button
                   className="bg-red-500 text-white px-3 py-1 rounded"
                   onClick={() => deleteUserData(d.user_id)}

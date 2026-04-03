@@ -154,7 +154,39 @@ function Dashboard() {
       fetchProfile();
     }, 2000);
   };
+// 📸 UPLOAD PROOF
+const uploadProof = async (drawId, file) => {
+  if (!file) return alert("Select file ❌");
 
+  const fileName = `${Date.now()}_${file.name}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("proofs")
+    .upload(fileName, file);
+
+  if (uploadError) {
+    alert("Upload failed ❌");
+    return;
+  }
+
+  const { data } = supabase.storage
+    .from("proofs")
+    .getPublicUrl(fileName);
+
+  const proof_url = data.publicUrl;
+
+  await supabase
+    .from("draws")
+    .update({
+      proof_url,
+      verification_status: "pending"
+    })
+    .eq("id", drawId);
+
+  alert("Proof uploaded ✅");
+
+  fetchHistory();
+};
   // 🎯 DRAW
   const runDraw = async () => {
     if (subscription !== "active") {
@@ -327,7 +359,28 @@ function Dashboard() {
         <ul className="mt-2 space-y-2">
           {history.map((h) => (
             <li key={h.id} className="bg-gray-100 p-2 rounded">
-              🎯 {h.numbers} | Matches: {h.matches} | {h.result}
+            <li key={h.id} className="bg-gray-100 p-2 rounded">
+
+  🎯 {h.numbers} | Matches: {h.matches} | {h.result}
+
+  <br />
+
+  Status: {h.verification_status || "pending"}
+
+  {!h.proof_url && (
+    <input
+      type="file"
+      onChange={(e) => uploadProof(h.id, e.target.files[0])}
+    />
+  )}
+
+  {h.proof_url && (
+    <a href={h.proof_url} target="_blank" rel="noreferrer">
+      View Proof 📸
+    </a>
+  )}
+
+</li>
             </li>
           ))}
         </ul>
