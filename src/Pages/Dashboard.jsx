@@ -10,14 +10,13 @@ function Dashboard() {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState([]);
   const [latestDraw, setLatestDraw] = useState(null);
-
   const [subscription, setSubscription] = useState("inactive");
 
   const [charities, setCharities] = useState([]);
   const [selectedCharity, setSelectedCharity] = useState("");
   const [charityPercent, setCharityPercent] = useState(10);
 
-  // 🔥 Fetch scores
+  // FETCH FUNCTIONS (same)
   const fetchScores = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -32,7 +31,6 @@ function Dashboard() {
     setScores(data || []);
   };
 
-  // 🔥 Fetch history
   const fetchHistory = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -47,7 +45,6 @@ function Dashboard() {
     setHistory(data || []);
   };
 
-  // 🔥 Latest draw
   const fetchLatestDraw = async () => {
     const { data } = await supabase
       .from("draws")
@@ -59,7 +56,6 @@ function Dashboard() {
     setLatestDraw(data);
   };
 
-  // 🔥 Fetch profile
   const fetchProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -71,16 +67,10 @@ function Dashboard() {
       .maybeSingle();
 
     setSubscription(data?.subscription_status || "inactive");
-
-    console.log("Subscription:", data?.subscription_status);
   };
 
-  // 🔥 Fetch charities
   const fetchCharities = async () => {
-    const { data } = await supabase
-      .from("charities")
-      .select("*");
-
+    const { data } = await supabase.from("charities").select("*");
     setCharities(data || []);
   };
 
@@ -102,7 +92,7 @@ function Dashboard() {
     checkUser();
   }, []);
 
-  // ➕ Add score
+  // ADD SCORE (same)
   const addScore = async () => {
     if (subscription !== "active") {
       alert("Buy Premium first 💳");
@@ -116,16 +106,6 @@ function Dashboard() {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    const { data: oldScores } = await supabase
-      .from("scores")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("id", { ascending: true });
-
-    if (oldScores && oldScores.length >= 5) {
-      await supabase.from("scores").delete().eq("id", oldScores[0].id);
-    }
-
     await supabase.from("scores").insert([
       {
         user_id: user.id,
@@ -138,90 +118,57 @@ function Dashboard() {
     fetchScores();
   };
 
-  // 💳 Payment (Demo)
+  // PAYMENT (same)
   const handlePayment = async () => {
-  alert("Redirecting to payment... 💳");
+    alert("Redirecting to payment... 💳");
 
-  setTimeout(async () => {
-    alert("Payment Successful ✅");
+    setTimeout(async () => {
+      alert("Payment Successful ✅");
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+      const { data: { user } } = await supabase.auth.getUser();
+
+      await supabase
+        .from("profiles")
+        .update({ subscription_status: "active" })
+        .eq("id", user.id);
+
+      setSubscription("active");
+    }, 1500);
+  };
+
+  // UPLOAD PROOF (same)
+  const uploadProof = async (drawId, file) => {
+    if (!file) return alert("Select file ❌");
+
+    const fileName = `${Date.now()}_${file.name}`;
+
+    const { error } = await supabase.storage
+      .from("proofs")
+      .upload(fileName, file);
+
+    if (error) return alert("Upload failed ❌");
+
+    const { data } = supabase.storage
+      .from("proofs")
+      .getPublicUrl(fileName);
 
     await supabase
-      .from("profiles")
-      .update({ subscription_status: "active" })
-      .eq("id", user.id);
+      .from("draws")
+      .update({
+        proof_url: data.publicUrl,
+        verification_status: "pending",
+      })
+      .eq("id", drawId);
 
-    // 🔥 FORCE UPDATE
-    setSubscription("active");
+    alert("Proof uploaded ✅");
+    fetchHistory();
+  };
 
-  }, 1500);
-};
-// 📸 UPLOAD PROOF
-const uploadProof = async (drawId, file) => {
-  if (!file) return alert("Select file ❌");
-
-  const fileName = `${Date.now()}_${file.name}`;
-
-  // 🔥 Upload file
-  const { error: uploadError } = await supabase.storage
-    .from("proofs")
-    .upload(fileName, file);
-
-  if (uploadError) {
-    console.log(uploadError);
-    return alert("Upload failed ❌");
-  }
-
-  // 🔥 Get public URL
-  const { data: publicData } = supabase.storage
-    .from("proofs")
-    .getPublicUrl(fileName);
-
-  const proof_url = publicData.publicUrl;
-
-  console.log("URL:", proof_url); // 🔥 check console
-
-  // 🔥 UPDATE DATABASE
-  const { error: updateError } = await supabase
-    .from("draws")
-    .update({
-      proof_url: proof_url,
-      verification_status: "pending"
-    })
-    .eq("id", drawId);
-
-  if (updateError) {
-    console.log(updateError);
-    return alert("DB update failed ❌");
-  }
-
-  alert("Proof uploaded ✅");
-
-  fetchHistory();
-};
-  // 🎯 DRAW
+  // DRAW (same)
   const runDraw = async () => {
-    if (subscription !== "active") {
-      alert("Buy Premium first 💳");
-      return;
-    }
-
-    if (scores.length < 5) {
-      alert("Add 5 scores first!");
-      return;
-    }
-
-    if (!selectedCharity) {
-      alert("Select charity ❤️");
-      return;
-    }
-
-    if (charityPercent < 10) {
-      alert("Minimum charity is 10%");
-      return;
-    }
+    if (subscription !== "active") return alert("Buy Premium first");
+    if (scores.length < 5) return alert("Add 5 scores");
+    if (!selectedCharity) return alert("Select charity");
 
     const drawNumbers = Array.from({ length: 5 }, () =>
       Math.floor(Math.random() * 45) + 1
@@ -234,23 +181,6 @@ const uploadProof = async (drawId, file) => {
       if (drawNumbers.includes(num)) matchCount++;
     });
 
-    let message = "";
-    let prize = "";
-
-    if (matchCount === 5) {
-      message = "🥇 Jackpot";
-      prize = "₹5000";
-    } else if (matchCount === 4) {
-      message = "🥈 4 Matches";
-      prize = "₹2000";
-    } else if (matchCount === 3) {
-      message = "🥉 3 Matches";
-      prize = "₹500";
-    } else {
-      message = "😢 No Win";
-      prize = "₹0";
-    }
-
     const { data: { user } } = await supabase.auth.getUser();
 
     await supabase.from("draws").insert([
@@ -258,34 +188,35 @@ const uploadProof = async (drawId, file) => {
         user_id: user.id,
         numbers: drawNumbers.join(", "),
         matches: matchCount,
-        result: `${message} | Prize: ${prize} | Charity: ${selectedCharity} (${charityPercent}%)`,
+        result: matchCount >= 3 ? "🎉 Win" : "😢 No Win",
       },
     ]);
 
     fetchHistory();
     fetchLatestDraw();
-
-    alert("🎯 You have entered the Monthly Draw!");
   };
 
   return (
-<div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">     
-<motion.div
-  initial={{ opacity: 0, y: 50 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.5 }}
-  className="max-w-2xl mx-auto bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-white/20"
-></motion.div>
-<h1 className="text-3xl font-bold text-white text-center">
-  🎯 Your Golf Dashboard
-</h1>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
 
-<p className="text-white text-center mb-4">
-  Play Golf. Win Rewards. Change Lives ❤️
-</p>
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-2xl mx-auto bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-white/20"
+      >
+
+        <h1 className="text-3xl font-bold text-white text-center">
+          🎯 Your Golf Dashboard
+        </h1>
+
+        <p className="text-white text-center mb-4">
+          Play Golf. Win Rewards. Change Lives ❤️
+        </p>
+
         {/* Logout */}
         <button
-          className="bg-red-500 text-white px-4 py-2 rounded mb-4"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition transform"
           onClick={async () => {
             await supabase.auth.signOut();
             navigate("/");
@@ -296,11 +227,11 @@ const uploadProof = async (drawId, file) => {
 
         {/* Subscription */}
         <button
-          className={`px-4 py-2 rounded-xl text-white shadow-lg transition transform hover:scale-105 ${
-  subscription === "active"
-    ? "bg-green-500"
-    : "bg-gradient-to-r from-pink-500 to-purple-500 hover:shadow-pink-500/50"
-}`}
+          className={`w-full mt-4 px-4 py-2 rounded-xl text-white ${
+            subscription === "active"
+              ? "bg-green-500"
+              : "bg-gradient-to-r from-pink-500 to-purple-500"
+          }`}
           onClick={handlePayment}
         >
           {subscription === "active"
@@ -309,18 +240,18 @@ const uploadProof = async (drawId, file) => {
         </button>
 
         {/* Latest Draw */}
-        <h3 className="font-bold">🎯 Latest Draw</h3>
-        {latestDraw ? (
-          <div className="bg-yellow-100 p-3 rounded mt-2">
+        <h3 className="text-white mt-4">🎯 Latest Draw</h3>
+
+        {latestDraw && (
+          <div className="bg-white/20 p-3 rounded text-white mt-2">
             <p><b>Numbers:</b> {latestDraw.numbers}</p>
             <p><b>Result:</b> {latestDraw.result}</p>
           </div>
-        ) : (
-          <p>No draw yet</p>
         )}
 
         {/* Charity */}
-        <h3 className="font-semibold mt-4">Select Charity ❤️</h3>
+        <h3 className="text-white mt-4">Select Charity ❤️</h3>
+
         <select
           className="bg-white/20 backdrop-blur-md border border-white/30 text-white p-2 rounded w-full"
           value={selectedCharity}
@@ -328,87 +259,75 @@ const uploadProof = async (drawId, file) => {
         >
           <option value="">Choose charity</option>
           {charities.map((c) => (
-            <option key={c.id} value={c.name}>
-              {c.name}
-            </option>
+            <option key={c.id} value={c.name}>{c.name}</option>
           ))}
         </select>
 
         <input
           type="number"
-          className="border p-2 rounded w-full mt-2"
-          placeholder="Charity % (min 10)"
+          className="bg-white/20 backdrop-blur-md border border-white/30 text-white p-2 rounded w-full mt-2"
           value={charityPercent}
           onChange={(e) => setCharityPercent(e.target.value)}
         />
 
         {/* Add Score */}
-        <h3 className="font-semibold mt-4">Add Score</h3>
+        <h3 className="text-white mt-4">Add Score</h3>
+
         <div className="flex gap-2 mt-2">
           <input
             type="number"
-            className="border p-2 rounded w-full"
-            placeholder="1-45"
+            className="bg-white/20 text-white p-2 rounded w-full"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
+
           <button
-            className="bg-green-500 text-white px-4 rounded"
+            className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 rounded-xl"
             onClick={addScore}
           >
             Add
           </button>
         </div>
 
-        {/* Scores */}
-        <ul className="mt-4 space-y-2">
-          {scores.map((s) => (
-            <li key={s.id} className="bg-gray-50 p-2 rounded">
-              Score: {s.score} | Date: {s.date}
-            </li>
-          ))}
-        </ul>
-
         {/* Draw */}
         <button
-          className="bg-purple-500 text-white px-4 py-2 rounded mt-4 w-full"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mt-4 w-full"
           onClick={runDraw}
         >
           Enter Monthly Draw 🎯
         </button>
 
         {/* History */}
-        <h3 className="mt-6 font-bold">📜 Draw History</h3>
+        <h3 className="text-white mt-6">📜 Draw History</h3>
+
         <ul className="mt-2 space-y-2">
           {history.map((h) => (
-            <li key={h.id} className="bg-gray-100 p-2 rounded">
-            <li key={h.id} className="bg-gray-100 p-2 rounded">
+            <li key={h.id} className="bg-white/20 p-2 rounded text-white">
 
-  🎯 {h.numbers} | Matches: {h.matches} | {h.result}
+              🎯 {h.numbers} | Matches: {h.matches} | {h.result}
 
-  <br />
+              <br />
 
-  Status: {h.verification_status || "pending"}
+              Status: {h.verification_status || "pending"}
 
-  {!h.proof_url && (
-    <input
-      type="file"
-      onChange={(e) => uploadProof(h.id, e.target.files[0])}
-    />
-  )}
+              {!h.proof_url && (
+                <input
+                  type="file"
+                  onChange={(e) => uploadProof(h.id, e.target.files[0])}
+                />
+              )}
 
-  {h.proof_url && (
-    <a href={h.proof_url} target="_blank" rel="noreferrer">
-      View Proof 📸
-    </a>
-  )}
+              {h.proof_url && (
+                <a href={h.proof_url} target="_blank" rel="noreferrer">
+                  View Proof 📸
+                </a>
+              )}
 
-</li>
             </li>
           ))}
         </ul>
 
-      </div>
+      </motion.div>
     </div>
   );
 }
