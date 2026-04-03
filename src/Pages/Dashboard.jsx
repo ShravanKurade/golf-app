@@ -70,6 +70,8 @@ function Dashboard() {
       .maybeSingle();
 
     setSubscription(data?.subscription_status || "inactive");
+
+    console.log("Subscription:", data?.subscription_status);
   };
 
   // 🔥 Fetch charities
@@ -137,23 +139,24 @@ function Dashboard() {
 
   // 💳 Payment (Demo)
   const handlePayment = async () => {
-    alert("Redirecting to payment... 💳");
+  alert("Redirecting to payment... 💳");
 
-    setTimeout(async () => {
-      alert("Payment Successful ✅");
+  setTimeout(async () => {
+    alert("Payment Successful ✅");
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-      await supabase
-        .from("profiles")
-        .update({ subscription_status: "active" })
-        .eq("id", user.id);
+    await supabase
+      .from("profiles")
+      .update({ subscription_status: "active" })
+      .eq("id", user.id);
 
-      setSubscription("active");
-      fetchProfile();
-    }, 2000);
-  };
+    // 🔥 FORCE UPDATE
+    setSubscription("active");
+
+  }, 1500);
+};
 // 📸 UPLOAD PROOF
 const uploadProof = async (drawId, file) => {
   if (!file) return alert("Select file ❌");
@@ -281,7 +284,7 @@ const uploadProof = async (drawId, file) => {
           onClick={handlePayment}
         >
           {subscription === "active"
-            ? "✅ Subscribed"
+            ? "✅ Premium Active"
             : "Buy Premium ₹99 💳"}
         </button>
 
