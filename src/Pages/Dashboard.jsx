@@ -314,7 +314,21 @@ function Dashboard() {
             Add
           </button>
         </div>
-
+{/* SHOW SCORES */}
+<ul className="mt-4 space-y-2">
+  {scores.length === 0 ? (
+    <p className="text-white text-sm">No scores yet</p>
+  ) : (
+    scores.map((s) => (
+      <li
+        key={s.id}
+        className="bg-white/20 backdrop-blur-md p-2 rounded text-white"
+      >
+        🎯 Score: {s.score} | 📅 {s.date}
+      </li>
+    ))
+  )}
+</ul>
         {/* DRAW */}
         <button
           className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mt-4 w-full shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
