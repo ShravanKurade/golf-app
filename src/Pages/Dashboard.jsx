@@ -163,28 +163,38 @@ const uploadProof = async (drawId, file) => {
 
   const fileName = `${Date.now()}_${file.name}`;
 
+  // 🔥 Upload file
   const { error: uploadError } = await supabase.storage
     .from("proofs")
     .upload(fileName, file);
 
   if (uploadError) {
-    alert("Upload failed ❌");
-    return;
+    console.log(uploadError);
+    return alert("Upload failed ❌");
   }
 
-  const { data } = supabase.storage
+  // 🔥 Get public URL
+  const { data: publicData } = supabase.storage
     .from("proofs")
     .getPublicUrl(fileName);
 
-  const proof_url = data.publicUrl;
+  const proof_url = publicData.publicUrl;
 
-  await supabase
+  console.log("URL:", proof_url); // 🔥 check console
+
+  // 🔥 UPDATE DATABASE
+  const { error: updateError } = await supabase
     .from("draws")
     .update({
-      proof_url,
+      proof_url: proof_url,
       verification_status: "pending"
     })
     .eq("id", drawId);
+
+  if (updateError) {
+    console.log(updateError);
+    return alert("DB update failed ❌");
+  }
 
   alert("Proof uploaded ✅");
 
