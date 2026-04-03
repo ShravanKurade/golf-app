@@ -1,5 +1,7 @@
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { supabase } from "../supabase";
+import toast from "react-hot-toast";
 
 function Admin() {
   const [draws, setDraws] = useState([]);
@@ -10,22 +12,16 @@ function Admin() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // ================= FETCH DRAWS =================
+  // ================= FETCH =================
   const fetchDraws = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("draws")
       .select("*")
       .order("id", { ascending: false });
 
-    if (error) {
-      console.log("Draw fetch error:", error);
-      return;
-    }
-
     setDraws(data || []);
   };
 
-  // ================= USERS COUNT =================
   const fetchUsersCount = async () => {
     const { count } = await supabase
       .from("profiles")
@@ -34,7 +30,6 @@ function Admin() {
     setUsersCount(count || 0);
   };
 
-  // ================= SUBSCRIBERS =================
   const fetchSubscribers = async () => {
     const { data } = await supabase.from("profiles").select("*");
 
@@ -54,64 +49,35 @@ function Admin() {
       Math.floor(Math.random() * 45) + 1
     );
 
-    const { data: scores, error } = await supabase
-      .from("scores")
-      .select("*");
-
-    if (error) return alert("Error fetching scores ❌");
-    if (!scores) return alert("No scores found ❌");
+    const { data: scores } = await supabase.from("scores").select("*");
 
     const userMap = {};
-    scores.forEach((s) => {
+    scores?.forEach((s) => {
       if (!userMap[s.user_id]) userMap[s.user_id] = [];
       userMap[s.user_id].push(s.score);
     });
 
-    const validUsers = Object.keys(userMap).filter(
-      (userId) => userMap[userId].length > 0
-    );
-
-    if (validUsers.length === 0)
-      return alert("No valid users for draw ❌");
-
-    for (let userId of validUsers) {
+    for (let userId in userMap) {
       const userNumbers = userMap[userId];
-
-      let matchCount = 0;
-      userNumbers.forEach((num) => {
-        if (drawNumbers.includes(num)) matchCount++;
-      });
-
-      let result = "😢 No Win";
-      let prize = "₹0";
-
-      if (matchCount === 5) {
-        result = "🥇 Jackpot";
-        prize = "₹5000";
-      } else if (matchCount === 4) {
-        result = "🥈 4 Matches";
-        prize = "₹2000";
-      } else if (matchCount === 3) {
-        result = "🥉 3 Matches";
-        prize = "₹500";
-      }
+      const matchCount = userNumbers.filter((n) =>
+        drawNumbers.includes(n)
+      ).length;
 
       await supabase.from("draws").insert([
         {
           user_id: userId,
           numbers: drawNumbers.join(", "),
           matches: matchCount,
-          result: `${result} | Prize: ${prize}`,
+          result: matchCount >= 3 ? "🎉 Win" : "😢 No Win",
         },
       ]);
     }
 
-    alert("🎯 Monthly Draw Completed!");
-    await new Promise((res) => setTimeout(res, 700));
+    toast.success("Draw completed 🎯");
     fetchDraws();
   };
 
-  // ================= VERIFY WINNER =================
+  // ================= VERIFY =================
   const verifyWinner = async (id, status) => {
     await supabase
       .from("draws")
@@ -121,21 +87,20 @@ function Admin() {
       })
       .eq("id", id);
 
-    alert("Updated ✅");
+    toast.success("Updated ✅");
     fetchDraws();
   };
 
   // ================= DELETE =================
   const deleteUserData = async (user_id) => {
-    if (!window.confirm("Delete this user's data?")) return;
+    if (!window.confirm("Delete user data?")) return;
 
     await Promise.all([
       supabase.from("scores").delete().eq("user_id", user_id),
       supabase.from("draws").delete().eq("user_id", user_id),
     ]);
 
-    alert("User data deleted ✅");
-
+    toast.success("Deleted ❌");
     fetchDraws();
     fetchUsersCount();
     fetchSubscribers();
@@ -144,11 +109,6 @@ function Admin() {
   // ================= ADMIN CHECK =================
   const checkAdmin = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      setLoading(false);
-      return;
-    }
 
     const { data } = await supabase
       .from("profiles")
@@ -164,8 +124,6 @@ function Admin() {
         fetchUsersCount(),
         fetchSubscribers(),
       ]);
-    } else {
-      setIsAdmin(false);
     }
 
     setLoading(false);
@@ -188,9 +146,14 @@ function Admin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
 
-      <div className="max-w-5xl mx-auto bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-white/20">
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-5xl mx-auto bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-white/20"
+      >
 
-        <h1 className="text-3xl font-bold mb-4 text-white">
+        <h1 className="text-3xl font-bold text-white mb-4">
           🧑‍💻 Admin Dashboard
         </h1>
 
@@ -204,83 +167,61 @@ function Admin() {
         {/* STATS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-white">
 
-          <div className="bg-white/20 p-4 rounded">
-            <h2 className="font-bold">Users</h2>
-            <p className="text-2xl">{usersCount}</p>
-          </div>
-
-          <div className="bg-white/20 p-4 rounded">
-            <h2 className="font-bold">Draws</h2>
-            <p className="text-2xl">{draws.length}</p>
-          </div>
-
-          <div className="bg-white/20 p-4 rounded">
-            <h2 className="font-bold">Subscribers</h2>
-            <p className="text-2xl">{subscribers}</p>
-          </div>
-
-          <div className="bg-white/20 p-4 rounded">
-            <h2 className="font-bold">Revenue 💰</h2>
-            <p className="text-2xl">₹{revenue}</p>
-          </div>
+          <div className="bg-white/20 p-4 rounded">Users: {usersCount}</div>
+          <div className="bg-white/20 p-4 rounded">Draws: {draws.length}</div>
+          <div className="bg-white/20 p-4 rounded">Subscribers: {subscribers}</div>
+          <div className="bg-white/20 p-4 rounded">₹{revenue}</div>
 
         </div>
 
         {/* DRAWS */}
-        <h2 className="font-bold mb-2 text-white">🎯 All Draws</h2>
+        <ul className="space-y-2">
+          {draws.map((d) => (
+            <li
+              key={d.id}
+              className="bg-white/20 text-white p-3 rounded flex justify-between"
+            >
+              <div>
+                🎯 {d.numbers} | Matches: {d.matches}
+                <br />
+                Status: {d.verification_status || "pending"}
 
-        {draws.length === 0 ? (
-          <p className="text-white">No draws yet</p>
-        ) : (
-          <ul className="space-y-2">
-            {draws.map((d) => (
-              <li
-                key={d.id}
-                className="bg-white/20 text-white p-3 rounded flex justify-between"
-              >
-                <div>
-                  🎯 {d.numbers} | Matches: {d.matches} | {d.result}
-                  <br />
-                  Status: {d.verification_status || "pending"}
+                <div className="mt-2">
 
-                  <div className="mt-2">
+                  {d.proof_url && (
+                    <a href={d.proof_url} target="_blank" rel="noreferrer">
+                      📸 View
+                    </a>
+                  )}
 
-                    {d.proof_url && (
-                      <a href={d.proof_url} target="_blank" rel="noreferrer">
-                        View 📸
-                      </a>
-                    )}
+                  <button
+                    className="bg-green-500 px-2 ml-2 rounded hover:shadow-pink-500/50"
+                    onClick={() => verifyWinner(d.id, "approved")}
+                  >
+                    Approve
+                  </button>
 
-                    <button
-                      className="bg-green-500 text-white px-3 py-1 rounded ml-2"
-                      onClick={() => verifyWinner(d.id, "approved")}
-                    >
-                      Approve
-                    </button>
+                  <button
+                    className="bg-red-500 px-2 ml-2 rounded hover:shadow-pink-500/50"
+                    onClick={() => verifyWinner(d.id, "rejected")}
+                  >
+                    Reject
+                  </button>
 
-                    <button
-                      className="bg-red-500 text-white px-3 py-1 rounded ml-2"
-                      onClick={() => verifyWinner(d.id, "rejected")}
-                    >
-                      Reject
-                    </button>
-
-                  </div>
                 </div>
+              </div>
 
-                <button
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                  onClick={() => deleteUserData(d.user_id)}
-                >
-                  Delete ❌
-                </button>
+              <button
+                className="bg-red-500 px-2 rounded hover:shadow-pink-500/50"
+                onClick={() => deleteUserData(d.user_id)}
+              >
+                Delete ❌
+              </button>
+            </li>
+          ))}
+        </ul>
 
-              </li>
-            ))}
-          </ul>
-        )}
-
-      </div>
+      </motion.div>
     </div>
   );
 }

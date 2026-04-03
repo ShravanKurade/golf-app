@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { supabase } from "../supabase";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ function Dashboard() {
   const [selectedCharity, setSelectedCharity] = useState("");
   const [charityPercent, setCharityPercent] = useState(10);
 
-  // FETCH FUNCTIONS (same)
+  // ================= FETCH =================
   const fetchScores = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -92,19 +93,27 @@ function Dashboard() {
     checkUser();
   }, []);
 
-  // ADD SCORE (same)
+  // ================= ADD SCORE =================
   const addScore = async () => {
     if (subscription !== "active") {
-      alert("Buy Premium first 💳");
-      return;
+      return toast.error("Buy Premium first 💳");
     }
 
     if (!input || input < 1 || input > 45) {
-      alert("Score must be between 1 and 45");
-      return;
+      return toast.error("Score must be 1–45 ❌");
     }
 
     const { data: { user } } = await supabase.auth.getUser();
+
+    const { data: oldScores } = await supabase
+      .from("scores")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("id", { ascending: true });
+
+    if (oldScores && oldScores.length >= 5) {
+      await supabase.from("scores").delete().eq("id", oldScores[0].id);
+    }
 
     await supabase.from("scores").insert([
       {
@@ -116,15 +125,14 @@ function Dashboard() {
 
     setInput("");
     fetchScores();
+    toast.success("Score added ✅");
   };
 
-  // PAYMENT (same)
+  // ================= PAYMENT =================
   const handlePayment = async () => {
-    alert("Redirecting to payment... 💳");
+    toast("Redirecting to payment... 💳");
 
     setTimeout(async () => {
-      alert("Payment Successful ✅");
-
       const { data: { user } } = await supabase.auth.getUser();
 
       await supabase
@@ -133,12 +141,13 @@ function Dashboard() {
         .eq("id", user.id);
 
       setSubscription("active");
+      toast.success("Payment Successful ✅");
     }, 1500);
   };
 
-  // UPLOAD PROOF (same)
+  // ================= UPLOAD PROOF =================
   const uploadProof = async (drawId, file) => {
-    if (!file) return alert("Select file ❌");
+    if (!file) return toast.error("Select file ❌");
 
     const fileName = `${Date.now()}_${file.name}`;
 
@@ -146,7 +155,7 @@ function Dashboard() {
       .from("proofs")
       .upload(fileName, file);
 
-    if (error) return alert("Upload failed ❌");
+    if (error) return toast.error("Upload failed ❌");
 
     const { data } = supabase.storage
       .from("proofs")
@@ -160,15 +169,23 @@ function Dashboard() {
       })
       .eq("id", drawId);
 
-    alert("Proof uploaded ✅");
+    toast.success("Proof uploaded 📸");
     fetchHistory();
   };
 
-  // DRAW (same)
+  // ================= DRAW =================
   const runDraw = async () => {
-    if (subscription !== "active") return alert("Buy Premium first");
-    if (scores.length < 5) return alert("Add 5 scores");
-    if (!selectedCharity) return alert("Select charity");
+    if (subscription !== "active")
+      return toast.error("Buy Premium first");
+
+    if (scores.length < 5)
+      return toast.error("Add 5 scores");
+
+    if (!selectedCharity)
+      return toast.error("Select charity ❤️");
+
+    if (charityPercent < 10)
+      return toast.error("Minimum charity 10%");
 
     const drawNumbers = Array.from({ length: 5 }, () =>
       Math.floor(Math.random() * 45) + 1
@@ -176,10 +193,9 @@ function Dashboard() {
 
     const userNumbers = scores.map((s) => s.score);
 
-    let matchCount = 0;
-    userNumbers.forEach((num) => {
-      if (drawNumbers.includes(num)) matchCount++;
-    });
+    let matchCount = userNumbers.filter((n) =>
+      drawNumbers.includes(n)
+    ).length;
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -188,14 +204,24 @@ function Dashboard() {
         user_id: user.id,
         numbers: drawNumbers.join(", "),
         matches: matchCount,
-        result: matchCount >= 3 ? "🎉 Win" : "😢 No Win",
+        result:
+          matchCount === 5
+            ? "🥇 Jackpot"
+            : matchCount === 4
+            ? "🥈 4 Matches"
+            : matchCount === 3
+            ? "🥉 3 Matches"
+            : "😢 No Win",
       },
     ]);
 
     fetchHistory();
     fetchLatestDraw();
+
+    toast.success("Entered Draw 🎯");
   };
 
+  // ================= UI =================
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
 
@@ -214,9 +240,9 @@ function Dashboard() {
           Play Golf. Win Rewards. Change Lives ❤️
         </p>
 
-        {/* Logout */}
+        {/* LOGOUT */}
         <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition transform"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition transform"
           onClick={async () => {
             await supabase.auth.signOut();
             navigate("/");
@@ -225,12 +251,12 @@ function Dashboard() {
           Logout
         </button>
 
-        {/* Subscription */}
+        {/* SUBSCRIPTION */}
         <button
-          className={`w-full mt-4 px-4 py-2 rounded-xl text-white ${
+          className={`w-full mt-4 px-4 py-2 rounded-xl text-white shadow-lg hover:scale-105 transition ${
             subscription === "active"
               ? "bg-green-500"
-              : "bg-gradient-to-r from-pink-500 to-purple-500"
+              : "bg-gradient-to-r from-pink-500 to-purple-500 hover:shadow-pink-500/50"
           }`}
           onClick={handlePayment}
         >
@@ -239,7 +265,7 @@ function Dashboard() {
             : "Buy Premium ₹99 💳"}
         </button>
 
-        {/* Latest Draw */}
+        {/* LATEST DRAW */}
         <h3 className="text-white mt-4">🎯 Latest Draw</h3>
 
         {latestDraw && (
@@ -249,7 +275,7 @@ function Dashboard() {
           </div>
         )}
 
-        {/* Charity */}
+        {/* CHARITY */}
         <h3 className="text-white mt-4">Select Charity ❤️</h3>
 
         <select
@@ -270,7 +296,7 @@ function Dashboard() {
           onChange={(e) => setCharityPercent(e.target.value)}
         />
 
-        {/* Add Score */}
+        {/* ADD SCORE */}
         <h3 className="text-white mt-4">Add Score</h3>
 
         <div className="flex gap-2 mt-2">
@@ -282,22 +308,22 @@ function Dashboard() {
           />
 
           <button
-            className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 rounded-xl"
+            className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
             onClick={addScore}
           >
             Add
           </button>
         </div>
 
-        {/* Draw */}
+        {/* DRAW */}
         <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mt-4 w-full"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mt-4 w-full shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
           onClick={runDraw}
         >
           Enter Monthly Draw 🎯
         </button>
 
-        {/* History */}
+        {/* HISTORY */}
         <h3 className="text-white mt-6">📜 Draw History</h3>
 
         <ul className="mt-2 space-y-2">
