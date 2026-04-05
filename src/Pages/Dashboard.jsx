@@ -245,7 +245,7 @@ function Dashboard() {
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-white/20"
+        className="max-w-2xl mx-auto bg-white/20 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20"
       >
 
         <h1 className="text-3xl font-bold text-white text-center">
@@ -258,7 +258,7 @@ function Dashboard() {
 
         {/* LOGOUT */}
         <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mb-3"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition mb-3"
           onClick={async () => {
             await supabase.auth.signOut();
             navigate("/login");
@@ -269,10 +269,10 @@ function Dashboard() {
 
         {/* SUBSCRIPTION */}
         <button
-          className={`w-full px-4 py-2 rounded-xl text-white mb-2 ${
+          className={`w-full px-4 py-2 rounded-xl text-white shadow-lg mb-2 ${
             subscription === "active"
               ? "bg-green-500"
-              : "bg-gradient-to-r from-pink-500 to-purple-500"
+              : "bg-gradient-to-r from-pink-500 to-purple-500 hover:shadow-pink-500/50"
           }`}
           onClick={handlePayment}
         >
@@ -291,13 +291,13 @@ function Dashboard() {
         <h3 className="text-white mt-4">Select Charity ❤️</h3>
 
         <select
-          className="bg-white/20 p-2 rounded w-full text-white"
+          className="bg-white/30 backdrop-blur-md border border-white/30 text-white p-2 rounded w-full"
           value={selectedCharity}
           onChange={(e) => setSelectedCharity(e.target.value)}
         >
-          <option value="">Choose charity</option>
+          <option value="" className="text-black">Choose charity</option>
           {charities.map((c) => (
-            <option key={c.id} value={c.name}>
+            <option key={c.id} value={c.name} className="text-black">
               {c.name}
             </option>
           ))}
@@ -305,7 +305,7 @@ function Dashboard() {
 
         <input
           type="number"
-          className="bg-white/20 p-2 rounded w-full mt-2 text-white"
+          className="bg-white/30 backdrop-blur-md border border-white/30 text-white p-2 rounded w-full mt-2"
           value={charityPercent}
           onChange={(e) => setCharityPercent(e.target.value)}
         />
@@ -316,12 +316,15 @@ function Dashboard() {
         <div className="flex gap-2">
           <input
             type="number"
-            className="bg-white/20 p-2 rounded w-full text-white"
+            className="bg-white/30 text-white p-2 rounded w-full"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
 
-          <button className="bg-purple-500 px-4 rounded text-white" onClick={addScore}>
+          <button
+            className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
+            onClick={addScore}
+          >
             Add
           </button>
         </div>
@@ -329,7 +332,7 @@ function Dashboard() {
         {/* SCORES */}
         <ul className="mt-4 space-y-2">
           {scores.map((s) => (
-            <li key={s.id} className="bg-white/20 p-2 rounded text-white">
+            <li key={s.id} className="bg-white/30 p-2 rounded text-white">
               🎯 {s.score} | 📅 {s.date}
             </li>
           ))}
@@ -337,7 +340,7 @@ function Dashboard() {
 
         {/* DRAW */}
         <button
-          className="bg-purple-500 w-full py-2 mt-4 rounded text-white"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mt-4 w-full shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
           onClick={runDraw}
         >
           Enter Draw 🎯
@@ -348,7 +351,7 @@ function Dashboard() {
 
         <ul className="mt-2 space-y-2">
           {history.map((h) => (
-            <li key={h.id} className="bg-white/20 p-2 rounded text-white">
+            <li key={h.id} className="bg-white/30 p-2 rounded text-white">
               🎯 {h.result}
             </li>
           ))}
