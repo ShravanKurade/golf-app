@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 function Dashboard() {
   const navigate = useNavigate();
 
+  const [plan, setPlan] = useState("monthly");
   const [scores, setScores] = useState([]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState([]);
@@ -157,8 +158,13 @@ function Dashboard() {
       const { data: { user } } = await supabase.auth.getUser();
 
       const start = new Date();
-      const end = new Date();
-      end.setDate(start.getDate() + 30);
+      let end = new Date();
+
+      if (plan === "monthly") {
+        end.setDate(start.getDate() + 30);
+      } else {
+        end.setFullYear(start.getFullYear() + 1);
+      }
 
       await supabase
         .from("profiles")
@@ -166,14 +172,14 @@ function Dashboard() {
           subscription_status: "active",
           subscription_start: start,
           subscription_end: end,
-          subscription_plan: "monthly",
+          subscription_plan: plan,
         })
         .eq("id", user.id);
 
       setSubscription("active");
       setSubscriptionEnd(end);
 
-      toast.success("Subscription Active ✅");
+      toast.success(`Subscribed (${plan}) ✅`);
     }, 1500);
   };
 
@@ -258,7 +264,7 @@ function Dashboard() {
 
         {/* LOGOUT */}
         <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition mb-3"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mb-3"
           onClick={async () => {
             await supabase.auth.signOut();
             navigate("/login");
@@ -267,41 +273,66 @@ function Dashboard() {
           Logout
         </button>
 
+        {/* PLAN SELECT */}
+        <h3 className="text-white mt-2">Choose Plan 💳</h3>
+
+        <select
+          className="bg-white/20 text-white p-2 rounded w-full mt-2"
+          value={plan}
+          onChange={(e) => setPlan(e.target.value)}
+        >
+          <option value="monthly" className="text-black">
+            Monthly ₹99
+          </option>
+          <option value="yearly" className="text-black">
+            Yearly ₹999 (Save 🔥)
+          </option>
+        </select>
+
         {/* SUBSCRIPTION */}
         <button
-          className={`w-full px-4 py-2 rounded-xl text-white shadow-lg mb-2 ${
+          className={`w-full px-4 py-2 rounded-xl text-white mt-3 ${
             subscription === "active"
               ? "bg-green-500"
-              : "bg-gradient-to-r from-pink-500 to-purple-500 hover:shadow-pink-500/50"
+              : "bg-gradient-to-r from-pink-500 to-purple-500"
           }`}
           onClick={handlePayment}
         >
           {subscription === "active"
             ? "✅ Premium Active"
-            : "Buy Premium ₹99 💳"}
+            : plan === "monthly"
+              ? "Buy Monthly ₹99 💳"
+              : "Buy Yearly ₹999 💳"}
         </button>
+
+        {/* PLAN DISPLAY */}
+        <p className="text-white text-sm mt-1">
+          Plan: <b>{plan === "monthly" ? "Monthly ₹99" : "Yearly ₹999"}</b>
+        </p>
 
         {subscriptionEnd && (
           <p className="text-white text-sm">
             Valid till: {subscriptionEnd.toLocaleDateString()}
           </p>
         )}
-      {/* LATEST DRAW */}
-<h3 className="text-white mt-4">🎯 Latest Draw</h3>
 
-{latestDraw ? (
-  <div className="bg-white/30 backdrop-blur-md p-3 rounded text-white mt-2">
-    <p><b>Numbers:</b> {latestDraw.numbers}</p>
-    <p><b>Result:</b> {latestDraw.result}</p>
-  </div>
-) : (
-  <p className="text-white text-sm mt-2">No draw yet</p>
-)}
+        {/* LATEST DRAW */}
+        <h3 className="text-white mt-4">🎯 Latest Draw</h3>
+
+        {latestDraw ? (
+          <div className="bg-white/30 p-3 rounded text-white mt-2">
+            <p><b>Numbers:</b> {latestDraw.numbers}</p>
+            <p><b>Result:</b> {latestDraw.result}</p>
+          </div>
+        ) : (
+          <p className="text-white text-sm mt-2">No draw yet</p>
+        )}
+
         {/* CHARITY */}
         <h3 className="text-white mt-4">Select Charity ❤️</h3>
 
         <select
-          className="bg-white/30 backdrop-blur-md border border-white/30 text-white p-2 rounded w-full"
+          className="bg-white/30 text-white p-2 rounded w-full"
           value={selectedCharity}
           onChange={(e) => setSelectedCharity(e.target.value)}
         >
@@ -315,7 +346,7 @@ function Dashboard() {
 
         <input
           type="number"
-          className="bg-white/30 backdrop-blur-md border border-white/30 text-white p-2 rounded w-full mt-2"
+          className="bg-white/30 text-white p-2 rounded w-full mt-2"
           value={charityPercent}
           onChange={(e) => setCharityPercent(e.target.value)}
         />
@@ -331,10 +362,7 @@ function Dashboard() {
             onChange={(e) => setInput(e.target.value)}
           />
 
-          <button
-            className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
-            onClick={addScore}
-          >
+          <button className="bg-purple-500 px-4 rounded text-white" onClick={addScore}>
             Add
           </button>
         </div>
@@ -350,7 +378,7 @@ function Dashboard() {
 
         {/* DRAW */}
         <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mt-4 w-full shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
+          className="bg-purple-500 w-full py-2 mt-4 rounded text-white"
           onClick={runDraw}
         >
           Enter Draw 🎯
