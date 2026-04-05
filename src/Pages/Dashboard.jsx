@@ -286,7 +286,17 @@ function Dashboard() {
             Valid till: {subscriptionEnd.toLocaleDateString()}
           </p>
         )}
+      {/* LATEST DRAW */}
+<h3 className="text-white mt-4">🎯 Latest Draw</h3>
 
+{latestDraw ? (
+  <div className="bg-white/30 backdrop-blur-md p-3 rounded text-white mt-2">
+    <p><b>Numbers:</b> {latestDraw.numbers}</p>
+    <p><b>Result:</b> {latestDraw.result}</p>
+  </div>
+) : (
+  <p className="text-white text-sm mt-2">No draw yet</p>
+)}
         {/* CHARITY */}
         <h3 className="text-white mt-4">Select Charity ❤️</h3>
 
