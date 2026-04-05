@@ -352,7 +352,7 @@ function Dashboard() {
         />
 
         {/* ADD SCORE */}
-        <h3 className="text-white mt-4">Add Score</h3>
+        <h3 className="text-white mt-4">Add Score(1-45)</h3>
 
         <div className="flex gap-2">
           <input
