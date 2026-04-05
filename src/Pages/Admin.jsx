@@ -43,37 +43,45 @@ function Admin() {
     setRevenue(total * 99);
   };
 
-  // ================= RUN DRAW =================
+  // ================= RUN DRAW (FIXED 🔥) =================
   const runDraw = async () => {
     const drawNumbers = Array.from({ length: 5 }, () =>
       Math.floor(Math.random() * 45) + 1
     );
 
-    const { data: scores } = await supabase.from("scores").select("*");
+    const { data: drawsData } = await supabase
+      .from("draws")
+      .select("*");
 
-    const userMap = {};
-    scores?.forEach((s) => {
-      if (!userMap[s.user_id]) userMap[s.user_id] = [];
-      userMap[s.user_id].push(s.score);
-    });
+    if (!drawsData || drawsData.length === 0) {
+      return toast.error("No participants ❌");
+    }
 
-    for (let userId in userMap) {
-      const userNumbers = userMap[userId];
+    for (let d of drawsData) {
+      if (d.result !== "Waiting for draw ⏳") continue;
+
+      const userNumbers = d.numbers.split(",").map(Number);
+
       const matchCount = userNumbers.filter((n) =>
         drawNumbers.includes(n)
       ).length;
 
-      await supabase.from("draws").insert([
-        {
-          user_id: userId,
-          numbers: drawNumbers.join(", "),
+      let result = "😢 No Win";
+
+      if (matchCount === 5) result = "🥇 Jackpot";
+      else if (matchCount === 4) result = "🥈 4 Matches";
+      else if (matchCount === 3) result = "🥉 3 Matches";
+
+      await supabase
+        .from("draws")
+        .update({
           matches: matchCount,
-          result: matchCount >= 3 ? "🎉 Win" : "😢 No Win",
-        },
-      ]);
+          result: result,
+        })
+        .eq("id", d.id);
     }
 
-    toast.success("Draw completed 🎯");
+    toast.success("Monthly draw completed 🎯");
     fetchDraws();
   };
 
@@ -158,7 +166,7 @@ function Admin() {
         </h1>
 
         <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition transform mb-4"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition mb-4"
           onClick={runDraw}
         >
           Run Monthly Draw 🎯
@@ -166,12 +174,10 @@ function Admin() {
 
         {/* STATS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-white">
-
           <div className="bg-white/20 p-4 rounded">Users: {usersCount}</div>
           <div className="bg-white/20 p-4 rounded">Draws: {draws.length}</div>
           <div className="bg-white/20 p-4 rounded">Subscribers: {subscribers}</div>
           <div className="bg-white/20 p-4 rounded">₹{revenue}</div>
-
         </div>
 
         {/* DRAWS */}
@@ -187,7 +193,6 @@ function Admin() {
                 Status: {d.verification_status || "pending"}
 
                 <div className="mt-2">
-
                   {d.proof_url && (
                     <a href={d.proof_url} target="_blank" rel="noreferrer">
                       📸 View
@@ -195,24 +200,23 @@ function Admin() {
                   )}
 
                   <button
-                    className="bg-green-500 px-2 ml-2 rounded hover:shadow-pink-500/50"
+                    className="bg-green-500 px-2 ml-2 rounded"
                     onClick={() => verifyWinner(d.id, "approved")}
                   >
                     Approve
                   </button>
 
                   <button
-                    className="bg-red-500 px-2 ml-2 rounded hover:shadow-pink-500/50"
+                    className="bg-red-500 px-2 ml-2 rounded"
                     onClick={() => verifyWinner(d.id, "rejected")}
                   >
                     Reject
                   </button>
-
                 </div>
               </div>
 
               <button
-                className="bg-red-500 px-2 rounded hover:shadow-pink-500/50"
+                className="bg-red-500 px-2 rounded"
                 onClick={() => deleteUserData(d.user_id)}
               >
                 Delete ❌

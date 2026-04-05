@@ -173,13 +173,13 @@ function Dashboard() {
     fetchHistory();
   };
 
-  // ================= DRAW =================
-  const runDraw = async () => {
+  // ================= PARTICIPATE (FIXED) =================
+  const participateInDraw = async () => {
     if (subscription !== "active")
-      return toast.error("Buy Premium first");
+      return toast.error("Buy Premium first 💳");
 
     if (scores.length < 5)
-      return toast.error("Add 5 scores");
+      return toast.error("Add 5 scores first");
 
     if (!selectedCharity)
       return toast.error("Select charity ❤️");
@@ -187,39 +187,28 @@ function Dashboard() {
     if (charityPercent < 10)
       return toast.error("Minimum charity 10%");
 
-    const drawNumbers = Array.from({ length: 5 }, () =>
-      Math.floor(Math.random() * 45) + 1
-    );
-
-    const userNumbers = scores.map((s) => s.score);
-
-    let matchCount = userNumbers.filter((n) =>
-      drawNumbers.includes(n)
-    ).length;
-
     const { data: { user } } = await supabase.auth.getUser();
 
     await supabase.from("draws").insert([
       {
         user_id: user.id,
-        numbers: drawNumbers.join(", "),
-        matches: matchCount,
-        result:
-          matchCount === 5
-            ? "🥇 Jackpot"
-            : matchCount === 4
-            ? "🥈 4 Matches"
-            : matchCount === 3
-            ? "🥉 3 Matches"
-            : "😢 No Win",
+        numbers: scores.map(s => s.score).join(", "),
+        matches: 0,
+        result: "Waiting for draw ⏳",
       },
     ]);
 
+    toast.success("Successfully entered draw 🎯");
     fetchHistory();
-    fetchLatestDraw();
-
-    toast.success("Entered Draw 🎯");
   };
+
+  // ================= TOTAL WIN =================
+  const totalWinnings = history.reduce((acc, h) => {
+    if (h.result?.includes("Jackpot")) return acc + 5000;
+    if (h.result?.includes("4")) return acc + 2000;
+    if (h.result?.includes("3")) return acc + 500;
+    return acc;
+  }, 0);
 
   // ================= UI =================
   return (
@@ -240,9 +229,13 @@ function Dashboard() {
           Play Golf. Win Rewards. Change Lives ❤️
         </p>
 
+        <h3 className="text-white text-center mb-2">
+          💰 Total Winnings: ₹{totalWinnings}
+        </h3>
+
         {/* LOGOUT */}
         <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition transform"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
           onClick={async () => {
             await supabase.auth.signOut();
             navigate("/");
@@ -283,15 +276,12 @@ function Dashboard() {
           value={selectedCharity}
           onChange={(e) => setSelectedCharity(e.target.value)}
         >
-          <option value="" className="text-black">
-  Choose charity
-</option>
-
-{charities.map((c) => (
-  <option key={c.id} value={c.name} className="text-black">
-    {c.name}
-  </option>
-))}
+          <option value="" className="text-black">Choose charity</option>
+          {charities.map((c) => (
+            <option key={c.id} value={c.name} className="text-black">
+              {c.name}
+            </option>
+          ))}
         </select>
 
         <input
@@ -319,27 +309,22 @@ function Dashboard() {
             Add
           </button>
         </div>
-{/* SHOW SCORES */}
-<ul className="mt-4 space-y-2">
-  {scores.length === 0 ? (
-    <p className="text-white text-sm">No scores yet</p>
-  ) : (
-    scores.map((s) => (
-      <li
-        key={s.id}
-        className="bg-white/20 backdrop-blur-md p-2 rounded text-white"
-      >
-        🎯 Score: {s.score} | 📅 {s.date}
-      </li>
-    ))
-  )}
-</ul>
-        {/* DRAW */}
+
+        {/* SCORES */}
+        <ul className="mt-4 space-y-2">
+          {scores.map((s) => (
+            <li key={s.id} className="bg-white/20 p-2 rounded text-white">
+              🎯 Score: {s.score} | 📅 {s.date}
+            </li>
+          ))}
+        </ul>
+
+        {/* PARTICIPATE BUTTON */}
         <button
           className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mt-4 w-full shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
-          onClick={runDraw}
+          onClick={participateInDraw}
         >
-          Enter Monthly Draw 🎯
+          Participate in Monthly Draw 🎯
         </button>
 
         {/* HISTORY */}
