@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import { Toaster } from "react-hot-toast";
 
+import Landing from "./Pages/Landing"; // ✅ NEW
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 import Dashboard from "./Pages/Dashboard";
@@ -50,28 +51,34 @@ function App() {
   return (
     <BrowserRouter>
 
-      {/* 🔥 GLOBAL TOAST */}
       <Toaster position="top-right" />
 
       <Routes>
-        <Route path="/" element={<Login />} />
+
+        {/* 🔥 LANDING PAGE */}
+        <Route path="/" element={<Landing />} />
+
+        {/* AUTH */}
+        <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
+        {/* USER */}
         <Route
           path="/dashboard"
-          element={user ? <Dashboard /> : <Navigate to="/" />}
+          element={user ? <Dashboard /> : <Navigate to="/login" />}
         />
 
+        {/* ADMIN */}
         <Route
           path="/admin"
           element={
             user && role === "admin"
               ? <Admin />
-              : <Navigate to="/" />
+              : <Navigate to="/login" />
           }
         />
-      </Routes>
 
+      </Routes>
     </BrowserRouter>
   );
 }
