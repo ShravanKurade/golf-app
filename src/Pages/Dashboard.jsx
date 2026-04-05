@@ -11,6 +11,7 @@ function Dashboard() {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState([]);
   const [latestDraw, setLatestDraw] = useState(null);
+
   const [subscription, setSubscription] = useState("inactive");
   const [subscriptionEnd, setSubscriptionEnd] = useState(null);
 
@@ -176,34 +177,6 @@ function Dashboard() {
     }, 1500);
   };
 
-  // ================= UPLOAD =================
-  const uploadProof = async (drawId, file) => {
-    if (!file) return toast.error("Select file ❌");
-
-    const fileName = `${Date.now()}_${file.name}`;
-
-    const { error } = await supabase.storage
-      .from("proofs")
-      .upload(fileName, file);
-
-    if (error) return toast.error("Upload failed ❌");
-
-    const { data } = supabase.storage
-      .from("proofs")
-      .getPublicUrl(fileName);
-
-    await supabase
-      .from("draws")
-      .update({
-        proof_url: data.publicUrl,
-        verification_status: "pending",
-      })
-      .eq("id", drawId);
-
-    toast.success("Proof uploaded 📸");
-    fetchHistory();
-  };
-
   // ================= DRAW =================
   const runDraw = async () => {
     if (subscription !== "active")
@@ -230,8 +203,8 @@ function Dashboard() {
 
     const totalPool = 10000;
 
-    let prize = "";
     let message = "";
+    let prize = "";
 
     if (matchCount === 5) {
       message = "🥇 Jackpot";
@@ -283,8 +256,9 @@ function Dashboard() {
           Play Golf. Win Rewards. Change Lives ❤️
         </p>
 
+        {/* LOGOUT */}
         <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mb-3"
           onClick={async () => {
             await supabase.auth.signOut();
             navigate("/login");
@@ -293,8 +267,9 @@ function Dashboard() {
           Logout
         </button>
 
+        {/* SUBSCRIPTION */}
         <button
-          className={`w-full mt-4 px-4 py-2 rounded-xl text-white shadow-lg ${
+          className={`w-full px-4 py-2 rounded-xl text-white mb-2 ${
             subscription === "active"
               ? "bg-green-500"
               : "bg-gradient-to-r from-pink-500 to-purple-500"
@@ -307,15 +282,16 @@ function Dashboard() {
         </button>
 
         {subscriptionEnd && (
-          <p className="text-white mt-1">
+          <p className="text-white text-sm">
             Valid till: {subscriptionEnd.toLocaleDateString()}
           </p>
         )}
 
+        {/* CHARITY */}
         <h3 className="text-white mt-4">Select Charity ❤️</h3>
 
         <select
-          className="bg-white/20 text-white p-2 rounded w-full"
+          className="bg-white/20 p-2 rounded w-full text-white"
           value={selectedCharity}
           onChange={(e) => setSelectedCharity(e.target.value)}
         >
@@ -329,48 +305,51 @@ function Dashboard() {
 
         <input
           type="number"
-          className="bg-white/20 text-white p-2 rounded w-full mt-2"
+          className="bg-white/20 p-2 rounded w-full mt-2 text-white"
           value={charityPercent}
           onChange={(e) => setCharityPercent(e.target.value)}
         />
 
+        {/* ADD SCORE */}
         <h3 className="text-white mt-4">Add Score</h3>
 
-        <div className="flex gap-2 mt-2">
+        <div className="flex gap-2">
           <input
             type="number"
-            className="bg-white/20 text-white p-2 rounded w-full"
+            className="bg-white/20 p-2 rounded w-full text-white"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
 
-          <button
-            className="bg-purple-500 text-white px-4 rounded"
-            onClick={addScore}
-          >
+          <button className="bg-purple-500 px-4 rounded text-white" onClick={addScore}>
             Add
           </button>
         </div>
 
+        {/* SCORES */}
         <ul className="mt-4 space-y-2">
           {scores.map((s) => (
             <li key={s.id} className="bg-white/20 p-2 rounded text-white">
-              Score: {s.score}
+              🎯 {s.score} | 📅 {s.date}
             </li>
           ))}
         </ul>
 
+        {/* DRAW */}
         <button
-          className="bg-purple-500 text-white px-4 py-2 rounded mt-4 w-full"
+          className="bg-purple-500 w-full py-2 mt-4 rounded text-white"
           onClick={runDraw}
         >
-          Enter Draw
+          Enter Draw 🎯
         </button>
 
-        <ul className="mt-4 space-y-2">
+        {/* HISTORY */}
+        <h3 className="text-white mt-6">📜 History</h3>
+
+        <ul className="mt-2 space-y-2">
           {history.map((h) => (
             <li key={h.id} className="bg-white/20 p-2 rounded text-white">
-              {h.result}
+              🎯 {h.result}
             </li>
           ))}
         </ul>
