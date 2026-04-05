@@ -58,7 +58,6 @@ function Dashboard() {
     setLatestDraw(data);
   };
 
-  // 🔥 UPDATED PROFILE (LIFECYCLE)
   const fetchProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -158,7 +157,7 @@ function Dashboard() {
 
       const start = new Date();
       const end = new Date();
-      end.setDate(start.getDate() + 30); // monthly
+      end.setDate(start.getDate() + 30);
 
       await supabase
         .from("profiles")
@@ -177,7 +176,7 @@ function Dashboard() {
     }, 1500);
   };
 
-  // ================= UPLOAD PROOF =================
+  // ================= UPLOAD =================
   const uploadProof = async (drawId, file) => {
     if (!file) return toast.error("Select file ❌");
 
@@ -284,9 +283,8 @@ function Dashboard() {
           Play Golf. Win Rewards. Change Lives ❤️
         </p>
 
-        {/* LOGOUT */}
         <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition"
           onClick={async () => {
             await supabase.auth.signOut();
             navigate("/login");
@@ -295,12 +293,11 @@ function Dashboard() {
           Logout
         </button>
 
-        {/* SUBSCRIPTION */}
         <button
-          className={`w-full mt-4 px-4 py-2 rounded-xl text-white shadow-lg hover:scale-105 transition ${
+          className={`w-full mt-4 px-4 py-2 rounded-xl text-white shadow-lg ${
             subscription === "active"
               ? "bg-green-500"
-              : "bg-gradient-to-r from-pink-500 to-purple-500 hover:shadow-pink-500/50"
+              : "bg-gradient-to-r from-pink-500 to-purple-500"
           }`}
           onClick={handlePayment}
         >
@@ -309,14 +306,74 @@ function Dashboard() {
             : "Buy Premium ₹99 💳"}
         </button>
 
-        {subscription === "active" && subscriptionEnd && (
-          <p className="text-white text-sm mt-1">
+        {subscriptionEnd && (
+          <p className="text-white mt-1">
             Valid till: {subscriptionEnd.toLocaleDateString()}
           </p>
         )}
 
-        {/* REST SAME */}
-        {/* (Tera pura UI untouched rakha hai) */}
+        <h3 className="text-white mt-4">Select Charity ❤️</h3>
+
+        <select
+          className="bg-white/20 text-white p-2 rounded w-full"
+          value={selectedCharity}
+          onChange={(e) => setSelectedCharity(e.target.value)}
+        >
+          <option value="">Choose charity</option>
+          {charities.map((c) => (
+            <option key={c.id} value={c.name}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="number"
+          className="bg-white/20 text-white p-2 rounded w-full mt-2"
+          value={charityPercent}
+          onChange={(e) => setCharityPercent(e.target.value)}
+        />
+
+        <h3 className="text-white mt-4">Add Score</h3>
+
+        <div className="flex gap-2 mt-2">
+          <input
+            type="number"
+            className="bg-white/20 text-white p-2 rounded w-full"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+
+          <button
+            className="bg-purple-500 text-white px-4 rounded"
+            onClick={addScore}
+          >
+            Add
+          </button>
+        </div>
+
+        <ul className="mt-4 space-y-2">
+          {scores.map((s) => (
+            <li key={s.id} className="bg-white/20 p-2 rounded text-white">
+              Score: {s.score}
+            </li>
+          ))}
+        </ul>
+
+        <button
+          className="bg-purple-500 text-white px-4 py-2 rounded mt-4 w-full"
+          onClick={runDraw}
+        >
+          Enter Draw
+        </button>
+
+        <ul className="mt-4 space-y-2">
+          {history.map((h) => (
+            <li key={h.id} className="bg-white/20 p-2 rounded text-white">
+              {h.result}
+            </li>
+          ))}
+        </ul>
 
       </motion.div>
     </div>
