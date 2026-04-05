@@ -80,7 +80,7 @@ function Dashboard() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        navigate("/");
+        navigate("/login");
       } else {
         fetchScores();
         fetchHistory();
@@ -173,13 +173,13 @@ function Dashboard() {
     fetchHistory();
   };
 
-  // ================= PARTICIPATE (FIXED) =================
-  const participateInDraw = async () => {
+  // ================= DRAW (🔥 UPDATED) =================
+  const runDraw = async () => {
     if (subscription !== "active")
-      return toast.error("Buy Premium first 💳");
+      return toast.error("Buy Premium first");
 
     if (scores.length < 5)
-      return toast.error("Add 5 scores first");
+      return toast.error("Add 5 scores");
 
     if (!selectedCharity)
       return toast.error("Select charity ❤️");
@@ -187,28 +187,52 @@ function Dashboard() {
     if (charityPercent < 10)
       return toast.error("Minimum charity 10%");
 
+    const drawNumbers = Array.from({ length: 5 }, () =>
+      Math.floor(Math.random() * 45) + 1
+    );
+
+    const userNumbers = scores.map((s) => s.score);
+
+    let matchCount = userNumbers.filter((n) =>
+      drawNumbers.includes(n)
+    ).length;
+
+    // 🔥 PRIZE POOL LOGIC
+    const totalPool = 10000;
+
+    let prize = "";
+    let message = "";
+
+    if (matchCount === 5) {
+      message = "🥇 Jackpot";
+      prize = `₹${Math.floor(totalPool * 0.4)} (40%)`;
+    } else if (matchCount === 4) {
+      message = "🥈 4 Matches";
+      prize = `₹${Math.floor(totalPool * 0.35)} (35%)`;
+    } else if (matchCount === 3) {
+      message = "🥉 3 Matches";
+      prize = `₹${Math.floor(totalPool * 0.25)} (25%)`;
+    } else {
+      message = "😢 No Win";
+      prize = "₹0";
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
 
     await supabase.from("draws").insert([
       {
         user_id: user.id,
-        numbers: scores.map(s => s.score).join(", "),
-        matches: 0,
-        result: "Waiting for draw ⏳",
+        numbers: drawNumbers.join(", "),
+        matches: matchCount,
+        result: `${message} | Prize: ${prize} | Charity: ${selectedCharity} (${charityPercent}%)`,
       },
     ]);
 
-    toast.success("Successfully entered draw 🎯");
     fetchHistory();
-  };
+    fetchLatestDraw();
 
-  // ================= TOTAL WIN =================
-  const totalWinnings = history.reduce((acc, h) => {
-    if (h.result?.includes("Jackpot")) return acc + 5000;
-    if (h.result?.includes("4")) return acc + 2000;
-    if (h.result?.includes("3")) return acc + 500;
-    return acc;
-  }, 0);
+    toast.success("Entered Draw 🎯");
+  };
 
   // ================= UI =================
   return (
@@ -229,16 +253,12 @@ function Dashboard() {
           Play Golf. Win Rewards. Change Lives ❤️
         </p>
 
-        <h3 className="text-white text-center mb-2">
-          💰 Total Winnings: ₹{totalWinnings}
-        </h3>
-
         {/* LOGOUT */}
         <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition transform"
           onClick={async () => {
             await supabase.auth.signOut();
-            navigate("/");
+            navigate("/login");
           }}
         >
           Logout
@@ -257,6 +277,12 @@ function Dashboard() {
             ? "✅ Premium Active"
             : "Buy Premium ₹99 💳"}
         </button>
+
+        {/* CHARITY IMPACT 🔥 */}
+        <p className="text-white mt-2">
+          ❤️ You are donating <b>{charityPercent}%</b> to{" "}
+          <b>{selectedCharity || "selected charity"}</b>
+        </p>
 
         {/* LATEST DRAW */}
         <h3 className="text-white mt-4">🎯 Latest Draw</h3>
@@ -319,12 +345,12 @@ function Dashboard() {
           ))}
         </ul>
 
-        {/* PARTICIPATE BUTTON */}
+        {/* DRAW */}
         <button
           className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mt-4 w-full shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition"
-          onClick={participateInDraw}
+          onClick={runDraw}
         >
-          Participate in Monthly Draw 🎯
+          Enter Monthly Draw 🎯
         </button>
 
         {/* HISTORY */}
@@ -333,11 +359,8 @@ function Dashboard() {
         <ul className="mt-2 space-y-2">
           {history.map((h) => (
             <li key={h.id} className="bg-white/20 p-2 rounded text-white">
-
               🎯 {h.numbers} | Matches: {h.matches} | {h.result}
-
               <br />
-
               Status: {h.verification_status || "pending"}
 
               {!h.proof_url && (
@@ -352,7 +375,6 @@ function Dashboard() {
                   View Proof 📸
                 </a>
               )}
-
             </li>
           ))}
         </ul>
