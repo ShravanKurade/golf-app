@@ -30,20 +30,21 @@ function Charities() {
     className="bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-md hover:scale-[1.02] transition"
   >
     
-    {/* 🖼️ IMAGE (PREMIUM FIXED) */}
-    <div className="w-full h-48 overflow-hidden rounded-lg">
+    {/* 🖼️ IMAGE (FULL VISIBLE - NO CROP) */}
+    <div className="w-full h-48 bg-white flex items-center justify-center rounded-lg">
       <img
         src={c.image_url}
         alt={c.name}
-        className="w-full h-full object-cover object-center hover:scale-110 transition duration-300"
+        className="max-h-full max-w-full object-contain"
       />
     </div>
 
-    {/* 📌 TEXT */}
+    {/* 📌 NAME */}
     <h2 className="mt-3 text-lg font-semibold text-white">
       {c.name}
     </h2>
 
+    {/* 📄 DESCRIPTION */}
     <p className="text-sm text-gray-200">
       {c.description}
     </p>
