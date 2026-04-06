@@ -46,48 +46,90 @@ function Admin() {
     // 🔥 PRIZE POOL (40% of revenue)
     setPrizePool(Math.floor(total * 99 * 0.4));
   };
+  // ================= SIMULATION =================
+const simulateDraw = () => {
+  const nums = Array.from({ length: 5 }, () =>
+    Math.floor(Math.random() * 45) + 1
+  );
 
+  toast(`Simulation: ${nums.join(", ")}`);
+};
   // ================= RUN DRAW =================
   const runDraw = async () => {
-    const drawNumbers = Array.from({ length: 5 }, () =>
-      Math.floor(Math.random() * 45) + 1
-    );
+  const drawNumbers = Array.from({ length: 5 }, () =>
+    Math.floor(Math.random() * 45) + 1
+  );
 
-    const { data: drawsData } = await supabase
+  const { data: drawsData } = await supabase.from("draws").select("*");
+
+  if (!drawsData || drawsData.length === 0) {
+    return toast.error("No participants ❌");
+  }
+
+  // 🔥 ACTIVE USERS
+  const { data: users } = await supabase.from("profiles").select("*");
+  const activeUsers = users.filter(u => u.subscription_status === "active");
+
+  const totalPool = activeUsers.length * 99;
+
+  let winners5 = [];
+  let winners4 = [];
+  let winners3 = [];
+
+  // MATCH CALCULATION
+  for (let d of drawsData) {
+    const userNumbers = d.numbers.split(",").map(Number);
+
+    const matchCount = userNumbers.filter(n =>
+      drawNumbers.includes(n)
+    ).length;
+
+    if (matchCount === 5) winners5.push(d);
+    else if (matchCount === 4) winners4.push(d);
+    else if (matchCount === 3) winners3.push(d);
+
+    await supabase
       .from("draws")
-      .select("*");
+      .update({ matches: matchCount })
+      .eq("id", d.id);
+  }
 
-    if (!drawsData || drawsData.length === 0) {
-      return toast.error("No participants ❌");
+  // 🔥 DYNAMIC SPLIT
+  const prize5 = Math.floor((totalPool * 0.4) / (winners5.length || 1));
+  const prize4 = Math.floor((totalPool * 0.35) / (winners4.length || 1));
+  const prize3 = Math.floor((totalPool * 0.25) / (winners3.length || 1));
+
+  for (let d of drawsData) {
+    let result = "😢 No Win";
+    let prize = 0;
+
+    if (winners5.find(w => w.id === d.id)) {
+      result = "🥇 Jackpot";
+      prize = prize5;
+    } else if (winners4.find(w => w.id === d.id)) {
+      result = "🥈 4 Matches";
+      prize = prize4;
+    } else if (winners3.find(w => w.id === d.id)) {
+      result = "🥉 3 Matches";
+      prize = prize3;
     }
 
-    for (let d of drawsData) {
-      if (d.result !== "Waiting for draw ⏳") continue;
+    await supabase
+      .from("draws")
+      .update({
+        result: `${result} | Prize: ₹${prize}`,
+      })
+      .eq("id", d.id);
+  }
 
-      const userNumbers = d.numbers.split(",").map(Number);
+  // 🔥 JACKPOT MESSAGE
+  if (winners5.length === 0) {
+    toast("No jackpot winner — rollover 🔁");
+  }
 
-      const matchCount = userNumbers.filter((n) =>
-        drawNumbers.includes(n)
-      ).length;
-
-      let result = "😢 No Win";
-
-      if (matchCount === 5) result = "🥇 Jackpot";
-      else if (matchCount === 4) result = "🥈 4 Matches";
-      else if (matchCount === 3) result = "🥉 3 Matches";
-
-      await supabase
-        .from("draws")
-        .update({
-          matches: matchCount,
-          result: result,
-        })
-        .eq("id", d.id);
-    }
-
-    toast.success("Monthly draw completed 🎯");
-    fetchDraws();
-  };
+  toast.success("Draw completed 🎯");
+  fetchDraws();
+};
 
   // ================= VERIFY =================
   const verifyWinner = async (id, status) => {
@@ -168,14 +210,25 @@ function Admin() {
         <h1 className="text-3xl font-bold text-white mb-4">
           🧑‍💻 Admin Dashboard
         </h1>
-
+      
         {/* RUN DRAW */}
-        <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition mb-4"
-          onClick={runDraw}
-        >
-          Run Monthly Draw 🎯
-        </button>
+        <div className="flex gap-3 mb-4">
+
+  <button
+    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg"
+    onClick={runDraw}
+  >
+    Run Monthly Draw 🎯
+  </button>
+
+  <button
+    onClick={simulateDraw}
+    className="bg-yellow-500 text-white px-4 py-2 rounded-xl"
+  >
+    Simulate 🧪
+  </button>
+
+</div>
 
         {/* 🔥 ANALYTICS UPGRADE */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 text-white">
@@ -217,7 +270,18 @@ function Admin() {
               <div>
                 🎯 {d.numbers} | Matches: {d.matches}
                 <br />
-                Status: {d.verification_status || "pending"}
+                Status: 
+<span
+  className={
+    d.verification_status === "approved"
+      ? "text-green-400"
+      : d.verification_status === "rejected"
+      ? "text-red-400"
+      : "text-yellow-300"
+  }
+>
+  {d.verification_status || "pending"}
+</span>
 
                 <div className="mt-2">
 
