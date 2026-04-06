@@ -22,7 +22,6 @@ function Charities() {
         ❤️ Charities
       </h1>
 
-      {/* ✅ FIX: center + width control */}
       <div className="max-w-7xl mx-auto">
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -30,15 +29,15 @@ function Charities() {
           {charities.map((c) => (
             <div
               key={c.id}
-              className="w-full bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-md hover:scale-[1.02] transition"
+              onClick={() => navigate(`/charity/${c.id}`)}   // 🔥 CLICK ENABLE
+              className="cursor-pointer w-full bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-md transform hover:scale-105 hover:shadow-xl transition duration-300"
             >
 
-              {/* ✅ IMAGE FIX */}
               <div className="w-full h-48 overflow-hidden rounded-lg">
                 <img
                   src={c.image_url}
                   alt={c.name}
-                  className="w-full h-full object-cover object-center"
+                  className="w-full h-full object-cover object-center transition duration-300 hover:scale-110"
                 />
               </div>
 
