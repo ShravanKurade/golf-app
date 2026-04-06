@@ -1,3 +1,5 @@
+import Charities from "./Pages/Charities";
+import CharityDetails from "./Pages/CharityDetails";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
@@ -77,7 +79,8 @@ function App() {
               : <Navigate to="/login" />
           }
         />
-
+      <Route path="/charities" element={<Charities />} />
+<Route path="/charity/:id" element={<CharityDetails />} />
       </Routes>
     </BrowserRouter>
   );
