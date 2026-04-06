@@ -25,23 +25,31 @@ function Charities() {
       <div className="grid md:grid-cols-3 gap-4">
 
         {charities.map((c) => (
-          <div
-            key={c.id}
-            className="bg-white/20 p-4 rounded-xl text-white cursor-pointer hover:scale-105 transition"
-            onClick={() => navigate(`/charity/${c.id}`)}
-          >
-            {c.image_url && (
-              <img
-                src={c.image_url}
-                alt=""
-                className="w-full h-40 object-cover rounded mb-2"
-              />
-            )}
+  <div
+    key={c.id}
+    className="bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-md hover:scale-[1.02] transition"
+  >
+    
+    {/* 🖼️ IMAGE (PREMIUM FIXED) */}
+    <div className="w-full h-48 overflow-hidden rounded-lg">
+      <img
+        src={c.image_url}
+        alt={c.name}
+        className="w-full h-full object-cover object-center hover:scale-110 transition duration-300"
+      />
+    </div>
 
-            <h2 className="text-xl font-bold">{c.name}</h2>
-            <p className="text-sm mt-1">{c.description}</p>
-          </div>
-        ))}
+    {/* 📌 TEXT */}
+    <h2 className="mt-3 text-lg font-semibold text-white">
+      {c.name}
+    </h2>
+
+    <p className="text-sm text-gray-200">
+      {c.description}
+    </p>
+
+  </div>
+))}
 
       </div>
 
