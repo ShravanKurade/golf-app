@@ -8,6 +8,7 @@ function Admin() {
   const [usersCount, setUsersCount] = useState(0);
   const [subscribers, setSubscribers] = useState(0);
   const [revenue, setRevenue] = useState(0);
+  const [prizePool, setPrizePool] = useState(0); // 🔥 NEW
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -41,9 +42,12 @@ function Admin() {
 
     setSubscribers(total);
     setRevenue(total * 99);
+
+    // 🔥 PRIZE POOL (40% of revenue)
+    setPrizePool(Math.floor(total * 99 * 0.4));
   };
 
-  // ================= RUN DRAW (FIXED 🔥) =================
+  // ================= RUN DRAW =================
   const runDraw = async () => {
     const drawNumbers = Array.from({ length: 5 }, () =>
       Math.floor(Math.random() * 45) + 1
@@ -165,6 +169,7 @@ function Admin() {
           🧑‍💻 Admin Dashboard
         </h1>
 
+        {/* RUN DRAW */}
         <button
           className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg hover:scale-105 hover:shadow-pink-500/50 transition mb-4"
           onClick={runDraw}
@@ -172,12 +177,34 @@ function Admin() {
           Run Monthly Draw 🎯
         </button>
 
-        {/* STATS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-white">
-          <div className="bg-white/20 p-4 rounded">Users: {usersCount}</div>
-          <div className="bg-white/20 p-4 rounded">Draws: {draws.length}</div>
-          <div className="bg-white/20 p-4 rounded">Subscribers: {subscribers}</div>
-          <div className="bg-white/20 p-4 rounded">₹{revenue}</div>
+        {/* 🔥 ANALYTICS UPGRADE */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 text-white">
+
+          <div className="bg-white/20 p-4 rounded">
+            👤 Users
+            <p className="text-xl font-bold">{usersCount}</p>
+          </div>
+
+          <div className="bg-white/20 p-4 rounded">
+            🎯 Draws
+            <p className="text-xl font-bold">{draws.length}</p>
+          </div>
+
+          <div className="bg-white/20 p-4 rounded">
+            💎 Subscribers
+            <p className="text-xl font-bold">{subscribers}</p>
+          </div>
+
+          <div className="bg-white/20 p-4 rounded">
+            💰 Revenue
+            <p className="text-xl font-bold">₹{revenue}</p>
+          </div>
+
+          <div className="bg-white/20 p-4 rounded">
+            🏆 Prize Pool
+            <p className="text-xl font-bold">₹{prizePool}</p>
+          </div>
+
         </div>
 
         {/* DRAWS */}
@@ -193,6 +220,7 @@ function Admin() {
                 Status: {d.verification_status || "pending"}
 
                 <div className="mt-2">
+
                   {d.proof_url && (
                     <a href={d.proof_url} target="_blank" rel="noreferrer">
                       📸 View
@@ -200,23 +228,24 @@ function Admin() {
                   )}
 
                   <button
-                    className="bg-green-500 px-2 ml-2 rounded"
+                    className="bg-green-500 px-2 ml-2 rounded hover:shadow-pink-500/50"
                     onClick={() => verifyWinner(d.id, "approved")}
                   >
                     Approve
                   </button>
 
                   <button
-                    className="bg-red-500 px-2 ml-2 rounded"
+                    className="bg-red-500 px-2 ml-2 rounded hover:shadow-pink-500/50"
                     onClick={() => verifyWinner(d.id, "rejected")}
                   >
                     Reject
                   </button>
+
                 </div>
               </div>
 
               <button
-                className="bg-red-500 px-2 rounded"
+                className="bg-red-500 px-2 rounded hover:shadow-pink-500/50"
                 onClick={() => deleteUserData(d.user_id)}
               >
                 Delete ❌
