@@ -334,11 +334,11 @@ const totalWinnings = draws.reduce((sum, d) => {
 
         {/* SUBSCRIPTION */}
         <button
-          className={`w-full px-4 py-2 rounded-xl text-white mt-3 ${
-            subscription === "active"
-              ? "bg-green-500"
-              : "bg-gradient-to-r from-pink-500 to-purple-500"
-          }`}
+          className={`w-full px-4 py-2 rounded-xl text-white mt-3 transition duration-300 ${
+  subscription === "active"
+    ? "bg-green-500 hover:bg-green-600 hover:scale-105 active:scale-95"
+    : "bg-gradient-to-r from-pink-500 to-purple-500 hover:scale-105 hover:shadow-lg active:scale-95"
+}`}
           onClick={handlePayment}
         >
           {subscription === "active"
