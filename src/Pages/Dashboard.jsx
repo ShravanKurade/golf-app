@@ -301,21 +301,26 @@ const totalWinnings = draws.reduce((sum, d) => {
         
 
         {/* LOGOUT */}
-        <button
-          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mb-3"
-          onClick={async () => {
-            await supabase.auth.signOut();
-            navigate("/login");
-          }}
-        >
-          Logout
-        </button>
-        <button
-       onClick={() => navigate("/charities")}
-       className="bg-pink-500 text-white px-4 py-2 rounded-xl shadow mb-4"
-        >
-  View Charities ❤️
-        </button>
+        <div className="flex justify-between items-center mt-4 mb-4">
+
+  <button
+    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl"
+    onClick={async () => {
+      await supabase.auth.signOut();
+      navigate("/login");
+    }}
+  >
+    Logout
+  </button>
+
+  <button
+    onClick={() => navigate("/charities")}
+    className="bg-pink-500 hover:bg-pink-600 transition text-white px-4 py-2 rounded-xl shadow"
+  >
+    View Charities ❤️
+  </button>
+
+</div>
         {/* PLAN SELECT */}
         <h3 className="text-white mt-2">Choose Plan 💳</h3>
 
