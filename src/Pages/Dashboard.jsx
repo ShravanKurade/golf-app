@@ -276,8 +276,10 @@ const totalWinnings = draws.reduce((sum, d) => {
 
         <h1 className="text-3xl font-bold text-white text-center">
           🎯 Your Golf Dashboard
-          
         </h1>
+        <p className="text-white text-center mt-2 mb-4 text-sm opacity-90">
+            Play Golf. Win Rewards. Change Lives ❤️
+        </p>
         <h2 className="text-white text-xl mt-4 text-center">
   💰 Total Winnings: ₹{totalWinnings}
 </h2>
@@ -295,15 +297,8 @@ const totalWinnings = draws.reduce((sum, d) => {
   </div>
 ))}
 
-        <button
-  onClick={() => navigate("/charities")}
-  className="bg-pink-500 text-white px-4 py-2 rounded-xl shadow mb-4"
->
-  View Charities ❤️
-</button>
-        <p className="text-white text-center mb-4">
-          Play Golf. Win Rewards. Change Lives ❤️
-        </p>
+        
+        
 
         {/* LOGOUT */}
         <button
@@ -315,7 +310,12 @@ const totalWinnings = draws.reduce((sum, d) => {
         >
           Logout
         </button>
-
+        <button
+       onClick={() => navigate("/charities")}
+       className="bg-pink-500 text-white px-4 py-2 rounded-xl shadow mb-4"
+        >
+  View Charities ❤️
+        </button>
         {/* PLAN SELECT */}
         <h3 className="text-white mt-2">Choose Plan 💳</h3>
 
