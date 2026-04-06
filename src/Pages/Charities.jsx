@@ -3,6 +3,7 @@ import { supabase } from "../supabase";
 import { useNavigate } from "react-router-dom";
 
 function Charities() {
+  const [search, setSearch] = useState("");
   const [charities, setCharities] = useState([]);
   const navigate = useNavigate();
 
@@ -21,12 +22,22 @@ function Charities() {
       <h1 className="text-3xl text-white mb-6 text-center">
         ❤️ Charities
       </h1>
-
+     <input
+  type="text"
+  placeholder="Search charity..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  className="w-full p-2 mb-4 rounded bg-white/20 text-white placeholder-gray-200"
+/>
       <div className="max-w-7xl mx-auto">
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           
-          {charities.map((c) => (
+          {charities
+  .filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  )
+  .map((c) => (
             <div
               key={c.id}
               onClick={() => navigate(`/charity/${c.id}`)}   // 🔥 CLICK ENABLE
@@ -48,7 +59,9 @@ function Charities() {
               <p className="text-sm text-gray-200">
                 {c.description}
               </p>
-
+              <p className="text-xs text-pink-200 mt-2">
+  ❤️ Your support helps change lives
+</p>
             </div>
           ))}
 
