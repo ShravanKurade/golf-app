@@ -4,6 +4,8 @@ import { supabase } from "../supabase";
 import toast from "react-hot-toast";
 
 function Admin() {
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalCharity, setTotalCharity] = useState(0);
   const [users, setUsers] = useState([]);
   const [charities, setCharities] = useState([]);
   const [newCharity, setNewCharity] = useState("");
@@ -112,7 +114,23 @@ const fetchUsers = async () => {
     // 🔥 FULL POOL
     setPrizePool(total * 99);
   };
+const fetchAnalytics = async () => {
+  const { data } = await supabase.from("profiles").select("*");
 
+  const activeUsers = (data || []).filter(
+    (u) => u.subscription_status === "active"
+  );
+
+  const total = activeUsers.length;
+
+  // 💰 Revenue
+  const revenue = total * 99;
+  setTotalRevenue(revenue);
+
+  // ❤️ Charity (assume 10% min)
+  const charity = revenue * 0.1;
+  setTotalCharity(charity);
+};
   // ================= SIMULATION =================
   const simulateDraw = () => {
     const nums = Array.from({ length: 5 }, () =>
@@ -260,6 +278,7 @@ const totalPool = activeUsers.length * 99 + jackpot;
     fetchSubscribers();
     fetchCharities();
     fetchUsers();
+    fetchAnalytics();
   };
 
   // ================= ADMIN CHECK =================
@@ -286,6 +305,7 @@ const totalPool = activeUsers.length * 99 + jackpot;
         fetchSubscribers(),
         fetchUsers(),
         fetchCharities(),
+        fetchAnalytics(),
       ]);
     }
 
@@ -341,7 +361,7 @@ const totalPool = activeUsers.length * 99 + jackpot;
 </div>
 
         {/* STATS */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 text-white">
+  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 text-white">
 
   <div className="bg-white/20 p-4 rounded-xl text-center">
     👤 Users
@@ -367,7 +387,15 @@ const totalPool = activeUsers.length * 99 + jackpot;
     🏆 Prize Pool
     <p className="text-xl font-bold">₹{prizePool}</p>
   </div>
+<div className="bg-white/20 p-4 rounded-xl text-center">
+  💰 Total Revenue
+  <p className="text-xl font-bold">₹{totalRevenue}</p>
+</div>
 
+<div className="bg-white/20 p-4 rounded-xl text-center">
+  ❤️ Charity Contribution
+  <p className="text-xl font-bold">₹{totalCharity}</p>
+</div>
 </div>
 
         {/* DRAWS */}
