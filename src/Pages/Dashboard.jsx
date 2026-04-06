@@ -313,12 +313,7 @@ const totalWinnings = draws.reduce((sum, d) => {
     Logout
   </button>
 
-  <button
-    onClick={() => navigate("/charities")}
-    className="bg-pink-500 hover:bg-pink-600 transition text-white px-4 py-2 rounded-xl shadow"
-  >
-    View Charities ❤️
-  </button>
+  
 
 </div>
         {/* PLAN SELECT */}
@@ -375,7 +370,14 @@ const totalWinnings = draws.reduce((sum, d) => {
         ) : (
           <p className="text-white text-sm mt-2">No draw yet</p>
         )}
-
+      <div className="flex justify-end mt-3 mb-3">
+  <button
+    onClick={() => navigate("/charities")}
+    className="bg-pink-500 hover:bg-pink-600 transition text-white px-4 py-2 rounded-xl shadow"
+  >
+    View Charities ❤️
+  </button>
+</div>
         {/* CHARITY */}
         <h3 className="text-white mt-4">Select Charity ❤️</h3>
 
