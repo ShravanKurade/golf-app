@@ -220,9 +220,7 @@ return () => clearInterval(interval);
   };
 
   // ================= DRAW =================
-  const runDraw = async () => {
-
-    // 📸 UPLOAD PROOF
+  // 📸 UPLOAD PROOF
 const uploadProof = async (drawId) => {
   if (!proofFile) return toast.error("Select file");
 
@@ -247,7 +245,7 @@ const uploadProof = async (drawId) => {
   toast.success("Proof uploaded ✅");
   fetchHistory();
 };
-
+  const runDraw = async () => {
     if (subscription !== "active")
       return toast.error("Buy Premium first");
 
@@ -378,24 +376,6 @@ const totalDonated = draws.reduce((sum, d) => {
   </div>
 ))}
         
-        
-
-        {/* LOGOUT */}
-        <div className="flex justify-between items-center mt-4 mb-4">
-
-  <button
-    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mb-3 hover:scale-105 hover:shadow-lg transition duration-300"
-    onClick={async () => {
-      await supabase.auth.signOut();
-      navigate("/login");
-    }}
-  >
-    Logout
-  </button>
-
-  
-
-</div>
         {/* PLAN SELECT */}
         <h3 className="text-white mt-2">Choose Plan 💳</h3>
 
@@ -525,7 +505,28 @@ const totalDonated = draws.reduce((sum, d) => {
             </li>
           ))}
         </ul>
+      {/* LOGOUT */}
+<div className="flex justify-center mt-6">
+  <button
+    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mb-3 hover:scale-105 hover:shadow-lg transition duration-300"
+    onClick={async () => {
+      await supabase.auth.signOut();
+      navigate("/login");
+    }}
+  >
+    Logout
+  </button>
+</div>
 
+  <button
+    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mb-3 hover:scale-105 hover:shadow-lg transition duration-300"
+    onClick={async () => {
+      await supabase.auth.signOut();
+      navigate("/login");
+    }}
+  >
+    Logout
+  </button>
       </motion.div>
     </div>
   );
