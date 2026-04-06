@@ -304,7 +304,7 @@ const totalWinnings = draws.reduce((sum, d) => {
         <div className="flex justify-between items-center mt-4 mb-4">
 
   <button
-    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl"
+    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mb-3 hover:scale-105 hover:shadow-lg transition duration-300"
     onClick={async () => {
       await supabase.auth.signOut();
       navigate("/login");
@@ -373,8 +373,8 @@ const totalWinnings = draws.reduce((sum, d) => {
       <div className="flex justify-center mt-3 mb-3">
   <button
     onClick={() => navigate("/charities")}
-    className="bg-pink-500 hover:bg-pink-600 transition text-white px-4 py-2 rounded-xl shadow"
-  >
+    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow hover:scale-105 hover:shadow-lg transition duration-300"
+>
     View Charities ❤️
   </button>
 </div>
@@ -412,7 +412,8 @@ const totalWinnings = draws.reduce((sum, d) => {
             onChange={(e) => setInput(e.target.value)}
           />
 
-          <button className="bg-purple-500 px-4 rounded text-white" onClick={addScore}>
+          <button className="bg-purple-500 px-4 rounded text-white hover:bg-purple-600 hover:scale-105 transition duration-300"
+  onClick={addScore}>
             Add
           </button>
         </div>
@@ -428,7 +429,7 @@ const totalWinnings = draws.reduce((sum, d) => {
 
         {/* DRAW */}
         <button
-          className="bg-purple-500 w-full py-2 mt-4 rounded text-white"
+          className="bg-purple-500 w-full py-2 mt-4 rounded text-white hover:bg-purple-600 hover:scale-105 hover:shadow-lg transition duration-300"
           onClick={runDraw}
         >
           Enter Draw 🎯
