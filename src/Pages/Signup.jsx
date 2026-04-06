@@ -1,32 +1,41 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
+import toast from "react-hot-toast";
 
 function Signup() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // 🔥 NEW
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
+    if (!email || !password) {
+      return toast.error("Fill all fields ❌");
+    }
+
+    setLoading(true);
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
 
     if (error) {
-      alert(error.message);
-      return;
+      setLoading(false);
+      return toast.error(error.message);
     }
 
     const user = data?.user;
 
     if (!user) {
-      alert("Email confirmation ON hai ⚠️");
-      return;
+      setLoading(false);
+      return toast("Check your email for confirmation 📩");
     }
 
+    // Create profile if not exists
     const { data: existing } = await supabase
       .from("profiles")
       .select("*")
@@ -44,53 +53,83 @@ function Signup() {
         ]);
 
       if (profileError) {
-        alert("Profile create nahi hua ❌");
-        return;
+        setLoading(false);
+        return toast.error("Profile create failed ❌");
       }
     }
 
-    alert("Signup successful 🚀");
-    navigate("/");
+    setLoading(false);
+    toast.success("Signup successful 🚀");
+    navigate("/dashboard");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-6 rounded-xl shadow w-80">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-6">
 
-        <h2 className="text-2xl font-bold mb-4 text-center">Signup</h2>
+      <div className="bg-white/10 backdrop-blur-lg border border-white/20 p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
 
+        {/* TITLE */}
+        <h1 className="text-2xl font-bold text-white mb-2">
+          ⛳ Join the Golf Charity Movement
+        </h1>
+
+        <p className="text-white text-sm mb-6">
+          Play Golf. Win Rewards. Change Lives ❤️
+        </p>
+
+        {/* EMAIL */}
         <input
           type="email"
-          placeholder="Email"
-          className="border p-2 w-full mb-2"
+          placeholder="Enter email"
+          className="w-full p-3 mb-3 rounded-lg bg-white/20 text-white placeholder-white/70 outline-none"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        {/* 🔥 PASSWORD WITH TOGGLE */}
-        <div className="relative">
+        {/* PASSWORD */}
+        <div className="relative mb-4">
           <input
             type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            className="border p-2 w-full mb-3 pr-10"
+            placeholder="Enter password"
+            className="w-full p-3 rounded-lg bg-white/20 text-white placeholder-white/70 outline-none pr-10"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
           <span
-            className="absolute right-3 top-2 cursor-pointer"
+            className="absolute right-3 top-3 cursor-pointer"
             onClick={() => setShowPassword(!showPassword)}
           >
             {showPassword ? "🙈" : "👁️"}
           </span>
         </div>
 
+        {/* BUTTON */}
         <button
-          className="bg-green-500 text-white w-full py-2 rounded"
+          className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-xl shadow-lg hover:scale-105 transition disabled:opacity-50"
           onClick={handleSignup}
+          disabled={loading}
         >
-          Signup
+          {loading ? "Creating Account..." : "Signup 🚀"}
         </button>
+
+        {/* LOGIN LINK */}
+        <p className="text-white text-sm mt-4">
+          Already have an account?{" "}
+          <span
+            className="underline cursor-pointer"
+            onClick={() => navigate("/login")}
+          >
+            Login
+          </span>
+        </p>
+
+        {/* FEATURES */}
+        <div className="mt-6 text-white text-sm space-y-1">
+          <p>🏆 Monthly Prize Draws</p>
+          <p>❤️ Support Charities</p>
+          <p>📊 Track Your Performance</p>
+        </div>
 
       </div>
     </div>
