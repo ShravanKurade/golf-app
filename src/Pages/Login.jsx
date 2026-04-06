@@ -24,9 +24,7 @@ function Login() {
       return;
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       alert("User not found ❌");
@@ -34,23 +32,16 @@ function Login() {
       return;
     }
 
-    let role = "user";
+    // 🔥 DIRECT ROLE FETCH (NO LOOP)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
 
-    for (let i = 0; i < 3; i++) {
-      const { data } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .maybeSingle();
+    const role = profile?.role || "user";
 
-      if (data?.role) {
-        role = data.role;
-        break;
-      }
-
-      await new Promise((res) => setTimeout(res, 300));
-    }
-
+    // 🔥 ROLE BASED REDIRECT
     if (role === "admin") {
       navigate("/admin", { replace: true });
     } else {
