@@ -4,6 +4,11 @@ import { supabase } from "../supabase";
 import toast from "react-hot-toast";
 
 function Admin() {
+  const [users, setUsers] = useState([]);
+  const [charities, setCharities] = useState([]);
+  const [newCharity, setNewCharity] = useState("");
+  const [charityDesc, setCharityDesc] = useState("");
+  const [charityImage, setCharityImage] = useState("");
   const [draws, setDraws] = useState([]);
   const [usersCount, setUsersCount] = useState(0);
   const [subscribers, setSubscribers] = useState(0);
@@ -13,7 +18,68 @@ function Admin() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // ================= FETCH =================
+  
+  // ================= TOGGLE FUNCTION =================
+
+const toggleRole = async (id, role) => {
+  await supabase
+    .from("profiles")
+    .update({
+      role: role === "admin" ? "user" : "admin",
+    })
+    .eq("id", id);
+
+  toast.success("Role updated ✅");
+  fetchUsers();
+};
+
+  // =================DELETE USER =================
+const deleteUser = async (id) => {
+  if (!window.confirm("Delete user?")) return;
+
+  await supabase.from("profiles").delete().eq("id", id);
+
+  toast.success("User deleted ❌");
+  fetchUsers();
+  fetchUsersCount();
+};
+  // ================= CHARITY ADD AND DELETE =================
+  const addCharity = async () => {
+  if (!newCharity) return;
+
+  await supabase.from("charities").insert([
+    {
+      name: newCharity,
+      description: charityDesc,
+      image_url: charityImage,
+    },
+  ]);
+
+  setNewCharity("");
+  setCharityDesc("");
+  setCharityImage("");
+
+  fetchCharities();
+  toast.success("Charity Added ✅");
+};
+
+const deleteCharity = async (id) => {
+  await supabase.from("charities").delete().eq("id", id);
+  fetchCharities();
+  toast.success("Deleted ❌");
+};
+// ================= FETCH =================
+
+const fetchUsers = async () => {
+  const { data } = await supabase.from("profiles").select("*");
+  setUsers(data || []);
+};
+
+  const fetchCharities = async () => {
+  const { data } = await supabase.from("charities").select("*");
+  setCharities(data || []);
+};
+
   const fetchDraws = async () => {
     const { data } = await supabase
       .from("draws")
@@ -192,6 +258,8 @@ const totalPool = activeUsers.length * 99 + jackpot;
     fetchDraws();
     fetchUsersCount();
     fetchSubscribers();
+    fetchCharities();
+    fetchUsers();
   };
 
   // ================= ADMIN CHECK =================
@@ -364,10 +432,93 @@ const totalPool = activeUsers.length * 99 + jackpot;
 </li>
           ))}
         </ul>
+      <h2 className="text-white mt-6 text-xl">Charity Management</h2>
 
+<div className="flex flex-col md:flex-row gap-2 mt-2">
+
+  <input
+    value={newCharity}
+    onChange={(e) => setNewCharity(e.target.value)}
+    placeholder="Name"
+    className="p-2 rounded"
+  />
+
+  <input
+    value={charityDesc}
+    onChange={(e) => setCharityDesc(e.target.value)}
+    placeholder="Description"
+    className="p-2 rounded"
+  />
+
+  <input
+    value={charityImage}
+    onChange={(e) => setCharityImage(e.target.value)}
+    placeholder="Image URL"
+    className="p-2 rounded"
+  />
+
+  <button
+    onClick={addCharity}
+    className="bg-blue-500 px-3 py-1 text-white rounded"
+  >
+    Add
+  </button>
+
+</div>
+
+{charities.map((c) => (
+  <div
+    key={c.id}
+    className="bg-white/20 p-2 mt-2 text-white flex justify-between items-center rounded"
+  >
+    <div>
+      <b>{c.name}</b>
+      <p className="text-sm">{c.description}</p>
+    </div>
+
+    <button
+      onClick={() => deleteCharity(c.id)}
+      className="bg-red-500 px-2 rounded"
+    >
+      Delete
+    </button>
+  </div>
+))}
+<h2 className="text-white mt-6 text-xl">User Management</h2>
+
+{users.map((u) => (
+  <div
+    key={u.id}
+    className="bg-white/20 p-2 mt-2 text-white flex justify-between items-center rounded"
+  >
+    <div>
+      {u.id.slice(0, 6)} <br />
+      Role: {u.role || "user"}
+    </div>
+
+    <div className="flex gap-2">
+
+      <button
+        onClick={() => toggleRole(u.id, u.role)}
+        className="bg-blue-500 px-2 rounded"
+      >
+        Toggle Role
+      </button>
+
+      <button
+        onClick={() => deleteUser(u.id)}
+        className="bg-red-500 px-2 rounded"
+      >
+        Delete
+      </button>
+
+    </div>
+  </div>
+))}
       </motion.div>
     </div>
   );
 }
+
 
 export default Admin;
