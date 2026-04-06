@@ -118,38 +118,37 @@ function Dashboard() {
 
   useEffect(() => {
 
-    // ⏳ TIMER
-const interval = setInterval(() => {
-  const nextDraw = new Date();
-  nextDraw.setDate(nextDraw.getDate() + 7);
+  const interval = setInterval(() => {
+    const nextDraw = new Date();
+    nextDraw.setDate(nextDraw.getDate() + 7);
 
-  const diff = nextDraw - new Date();
+    const diff = nextDraw - new Date();
 
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
 
-  setTimeLeft(`${days}d ${hours}h left`);
-}, 1000);
+    setTimeLeft(`${days}d ${hours}h left`);
+  }, 1000);
 
-return () => clearInterval(interval);
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      navigate("/login");
+    } else {
+      fetchScores();
+      fetchHistory();
+      fetchProfile();
+      fetchLatestDraw();
+      fetchCharities();  
+      fetchUserDraws();
+    }
+  };
 
-      if (!user) {
-        navigate("/login");
-      } else {
-        fetchScores();
-        fetchHistory();
-        fetchProfile();
-        fetchLatestDraw();
-        fetchCharities();
-        fetchUserDraws();
-      }
-    };
+  checkUser();
 
-    checkUser();
-  }, []);
+  return () => clearInterval(interval); 
+}, []);
 
   // ================= ADD SCORE =================
   const addScore = async () => {
