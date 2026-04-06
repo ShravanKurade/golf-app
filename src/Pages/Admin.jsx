@@ -78,49 +78,34 @@ const simulateDraw = () => {
 
   // MATCH CALCULATION
   for (let d of drawsData) {
-    const userNumbers = d.numbers.split(",").map(Number);
+  const userNumbers = d.numbers.split(",").map(Number);
 
-    const matchCount = userNumbers.filter(n =>
-      drawNumbers.includes(n)
-    ).length;
+  const matchCount = userNumbers.filter(n =>
+    drawNumbers.includes(n)
+  ).length;
 
-    if (matchCount === 5) winners5.push(d);
-    else if (matchCount === 4) winners4.push(d);
-    else if (matchCount === 3) winners3.push(d);
+  let result = "😢 No Win";
+  let prize = 0;
 
-    await supabase
-      .from("draws")
-      .update({ matches: matchCount })
-      .eq("id", d.id);
+  if (matchCount === 5) {
+    result = "🥇 Jackpot";
+    prize = Math.floor((totalPool * 0.4));
+  } else if (matchCount === 4) {
+    result = "🥈 4 Matches";
+    prize = Math.floor((totalPool * 0.35));
+  } else if (matchCount === 3) {
+    result = "🥉 3 Matches";
+    prize = Math.floor((totalPool * 0.25));
   }
 
-  // 🔥 DYNAMIC SPLIT
-  const prize5 = Math.floor((totalPool * 0.4) / (winners5.length || 1));
-  const prize4 = Math.floor((totalPool * 0.35) / (winners4.length || 1));
-  const prize3 = Math.floor((totalPool * 0.25) / (winners3.length || 1));
-
-  for (let d of drawsData) {
-    let result = "😢 No Win";
-    let prize = 0;
-
-    if (winners5.find(w => w.id === d.id)) {
-      result = "🥇 Jackpot";
-      prize = prize5;
-    } else if (winners4.find(w => w.id === d.id)) {
-      result = "🥈 4 Matches";
-      prize = prize4;
-    } else if (winners3.find(w => w.id === d.id)) {
-      result = "🥉 3 Matches";
-      prize = prize3;
-    }
-
-    await supabase
-      .from("draws")
-      .update({
-        result: `${result} | Prize: ₹${prize}`,
-      })
-      .eq("id", d.id);
-  }
+  await supabase
+    .from("draws")
+    .update({
+      matches: matchCount,
+      result: `${result} | Prize: ₹${prize}`,
+    })
+    .eq("id", d.id);
+}
 
   // 🔥 JACKPOT MESSAGE
   if (winners5.length === 0) {
