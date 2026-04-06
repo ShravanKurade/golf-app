@@ -221,13 +221,15 @@ function Dashboard() {
   // ================= DRAW =================
   // 📸 UPLOAD PROOF
 const uploadProof = async (drawId) => {
-  if (!proofFile) return toast.error("Select file");
+  const file = files[drawId];
 
-  const fileName = `${Date.now()}_${proofFile.name}`;
+  if (!file) return toast.error("Select file");
+
+  const fileName = `${Date.now()}_${file.name}`;
 
   const { error } = await supabase.storage
     .from("proofs")
-    .upload(fileName, proofFile);
+    .upload(fileName, file);
 
   if (error) return toast.error("Upload failed");
 
