@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 
 function Dashboard() {
   const navigate = useNavigate();
-
+  const [draws, setDraws] = useState([]);
   const [plan, setPlan] = useState("monthly");
   const [scores, setScores] = useState([]);
   const [input, setInput] = useState("");
@@ -20,7 +20,23 @@ function Dashboard() {
   const [selectedCharity, setSelectedCharity] = useState("");
   const [charityPercent, setCharityPercent] = useState(10);
 
+
+  
   // ================= FETCH =================
+
+  const fetchUserDraws = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { data } = await supabase
+    .from("draws")
+    .select("*")
+    .eq("user_id", user.id);
+
+  setDraws(data || []);
+};
+
   const fetchScores = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -109,6 +125,7 @@ function Dashboard() {
         fetchProfile();
         fetchLatestDraw();
         fetchCharities();
+        fetchUserDraws();
       }
     };
 
@@ -242,7 +259,10 @@ function Dashboard() {
 
     toast.success("Entered Draw 🎯");
   };
-
+const totalWinnings = draws.reduce((sum, d) => {
+  const match = d.result?.match(/₹(\d+)/);
+  return sum + (match ? Number(match[1]) : 0);
+}, 0);
   // ================= UI =================
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
@@ -256,7 +276,25 @@ function Dashboard() {
 
         <h1 className="text-3xl font-bold text-white text-center">
           🎯 Your Golf Dashboard
+          
         </h1>
+        <h2 className="text-white text-xl mt-4 text-center">
+  💰 Total Winnings: ₹{totalWinnings}
+</h2>
+<h2 className="text-white mt-6 text-xl text-center">
+  Your Draw History
+</h2>
+
+{history.map((d) => (
+  <div
+    key={d.id}
+    className="bg-white/20 p-3 mt-2 text-white rounded"
+  >
+    🎯 Numbers: {d.numbers} <br />
+    Result: {d.result || "Pending"}
+  </div>
+))}
+
         <button
   onClick={() => navigate("/charities")}
   className="bg-pink-500 text-white px-4 py-2 rounded-xl shadow mb-4"
