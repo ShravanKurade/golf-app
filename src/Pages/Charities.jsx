@@ -22,37 +22,32 @@ function Charities() {
         ❤️ Charities
       </h1>
 
-      <div className="grid md:grid-cols-3 gap-4">
-
-        {charities.map((c) => (
-  <div
-    key={c.id}
-    className="bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-md hover:scale-[1.02] transition"
-  >
-    
-    {/* 🖼️ IMAGE (NO WHITE SPACE - PREMIUM) */}
-    <div className="w-full h-48 overflow-hidden rounded-lg">
-      <img
-        src={c.image_url}
-        alt={c.name}
-        className="w-full h-full object-cover object-center hover:scale-105 transition duration-300"
-      />
-    </div>
-
-    {/* 📌 NAME */}
-    <h2 className="mt-3 text-lg font-semibold text-white">
-      {c.name}
-    </h2>
-
-    {/* 📄 DESCRIPTION */}
-    <p className="text-sm text-gray-200">
-      {c.description}
-    </p>
-
-  </div>
-))}
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-6">
+  {charities.map((c) => (
+    <div
+      key={c.id}
+      className="w-full bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-md hover:scale-[1.02] transition"
+    >
+      
+      <div className="w-full h-48 overflow-hidden rounded-lg">
+        <img
+          src={c.image_url}
+          alt={c.name}
+          className="w-full h-full object-cover object-center"
+        />
       </div>
+
+      <h2 className="mt-3 text-lg font-semibold text-white">
+        {c.name}
+      </h2>
+
+      <p className="text-sm text-gray-200">
+        {c.description}
+      </p>
+
+    </div>
+  ))}
+</div>
 
     </div>
   );
