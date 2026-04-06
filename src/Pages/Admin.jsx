@@ -229,109 +229,118 @@ function Admin() {
         </h1>
 
         {/* BUTTONS */}
-        <div className="flex gap-3 mb-4">
+        {/* BUTTONS */}
+<div className="flex gap-3 mb-4">
 
-          <button
-            className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg"
-            onClick={runDraw}
-          >
-            Run Monthly Draw 🎯
-          </button>
+  <button
+    className="bg-pink-500 text-white px-4 py-2 rounded-xl shadow"
+    onClick={runDraw}
+  >
+    Run Monthly Draw 🎯
+  </button>
 
-          <button
-            onClick={simulateDraw}
-            className="bg-yellow-500 text-white px-4 py-2 rounded-xl"
-          >
-            Simulate 🧪
-          </button>
+  <button
+    onClick={simulateDraw}
+    className="bg-orange-400 text-white px-4 py-2 rounded-xl shadow"
+  >
+    Simulate 🧪
+  </button>
 
-        </div>
+</div>
 
         {/* STATS */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 text-white">
 
-          <div className="bg-white/20 p-4 rounded">
-            👤 Users
-            <p className="text-xl font-bold">{usersCount}</p>
-          </div>
+  <div className="bg-white/20 p-4 rounded-xl text-center">
+    👤 Users
+    <p className="text-xl font-bold">{usersCount}</p>
+  </div>
 
-          <div className="bg-white/20 p-4 rounded">
-            🎯 Draws
-            <p className="text-xl font-bold">{draws.length}</p>
-          </div>
+  <div className="bg-white/20 p-4 rounded-xl text-center">
+    🎯 Draws
+    <p className="text-xl font-bold">{draws.length}</p>
+  </div>
 
-          <div className="bg-white/20 p-4 rounded">
-            💎 Subscribers
-            <p className="text-xl font-bold">{subscribers}</p>
-          </div>
+  <div className="bg-white/20 p-4 rounded-xl text-center">
+    💎 Subscribers
+    <p className="text-xl font-bold">{subscribers}</p>
+  </div>
 
-          <div className="bg-white/20 p-4 rounded">
-            💰 Revenue
-            <p className="text-xl font-bold">₹{revenue}</p>
-          </div>
+  <div className="bg-white/20 p-4 rounded-xl text-center">
+    💰 Revenue
+    <p className="text-xl font-bold">₹{revenue}</p>
+  </div>
 
-          <div className="bg-white/20 p-4 rounded">
-            🏆 Prize Pool
-            <p className="text-xl font-bold">₹{prizePool}</p>
-          </div>
+  <div className="bg-white/20 p-4 rounded-xl text-center">
+    🏆 Prize Pool
+    <p className="text-xl font-bold">₹{prizePool}</p>
+  </div>
 
-        </div>
+</div>
 
         {/* DRAWS */}
         <ul className="space-y-2">
           {draws.map((d) => (
             <li
-              key={d.id}
-              className="bg-white/20 text-white p-3 rounded flex justify-between"
-            >
-              <div>
-                🎯 {d.numbers} | Matches: {d.matches}
-                <br />
-                Status:
-                <span
-                  className={
-                    d.verification_status === "approved"
-                      ? "text-green-400"
-                      : d.verification_status === "rejected"
-                      ? "text-red-400"
-                      : "text-yellow-300"
-                  }
-                >
-                  {d.verification_status || "pending"}
-                </span>
+  key={d.id}
+  className="bg-white/20 text-white p-4 rounded-xl flex justify-between items-center shadow-md"
+>
+  <div>
+    <p className="font-semibold">
+      🎯 {d.numbers} | Matches: {d.matches}
+    </p>
 
-                <div className="mt-2">
+    <p className="text-sm mt-1">
+      Status:
+      <span
+        className={
+          d.verification_status === "approved"
+            ? "text-green-400 ml-1"
+            : d.verification_status === "rejected"
+            ? "text-red-400 ml-1"
+            : "text-yellow-300 ml-1"
+        }
+      >
+        {d.verification_status || "pending"}
+      </span>
+    </p>
 
-                  {d.proof_url && (
-                    <a href={d.proof_url} target="_blank" rel="noreferrer">
-                      📸 View
-                    </a>
-                  )}
+    <div className="mt-2 flex gap-2 items-center">
 
-                  <button
-                    className="bg-green-500 px-2 ml-2 rounded"
-                    onClick={() => verifyWinner(d.id, "approved")}
-                  >
-                    Approve
-                  </button>
+      {d.proof_url && (
+        <a
+          href={d.proof_url}
+          target="_blank"
+          className="text-sm underline"
+        >
+          📸 View
+        </a>
+      )}
 
-                  <button
-                    className="bg-red-500 px-2 ml-2 rounded"
-                    onClick={() => verifyWinner(d.id, "rejected")}
-                  >
-                    Reject
-                  </button>
+      <button
+        className="bg-green-500 px-3 py-1 rounded text-sm"
+        onClick={() => verifyWinner(d.id, "approved")}
+      >
+        Approve
+      </button>
 
-                </div>
-              </div>
+      <button
+        className="bg-red-500 px-3 py-1 rounded text-sm"
+        onClick={() => verifyWinner(d.id, "rejected")}
+      >
+        Reject
+      </button>
 
-              <button
-                className="bg-red-500 px-2 rounded"
-                onClick={() => deleteUserData(d.user_id)}
-              >
-                Delete ❌
-              </button>
-            </li>
+    </div>
+  </div>
+
+  <button
+    className="bg-red-500 px-4 py-2 rounded-lg text-sm"
+    onClick={() => deleteUserData(d.user_id)}
+  >
+    Delete ❌
+  </button>
+</li>
           ))}
         </ul>
 
