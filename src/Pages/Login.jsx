@@ -19,10 +19,13 @@ function Login() {
     });
 
     if (error) {
-      alert(error.message);
-      setLoading(false);
-      return;
-    }
+    toast.error(error.message);
+  } else {
+    toast.success("Login successful ✅");
+
+    navigate("/dashboard"); // 🔥 ADD THIS
+  }
+
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -103,6 +106,6 @@ function Login() {
       </div>
     </div>
   );
-}
+};
 
 export default Login;

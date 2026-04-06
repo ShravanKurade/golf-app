@@ -295,7 +295,7 @@ const totalPool = activeUsers.length * 99 + jackpot;
     ]);
 
     toast.success("Deleted ❌");
-
+    window.location.reload();
     fetchDraws();
     fetchUsersCount();
     fetchSubscribers();
