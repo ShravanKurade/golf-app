@@ -4,6 +4,7 @@ import { supabase } from "../supabase";
 import toast from "react-hot-toast";
 
 function Admin() {
+  const [editId, setEditId] = useState(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalCharity, setTotalCharity] = useState(0);
   const [users, setUsers] = useState([]);
@@ -48,6 +49,27 @@ const deleteUser = async (id) => {
   // ================= CHARITY ADD AND DELETE =================
   const addCharity = async () => {
   if (!newCharity) return;
+
+  const updateCharity = async () => {
+  if (!editId) return;
+
+  await supabase
+    .from("charities")
+    .update({
+      name: newCharity,
+      description: charityDesc,
+      image_url: charityImage,
+    })
+    .eq("id", editId);
+
+  setEditId(null);
+  setNewCharity("");
+  setCharityDesc("");
+  setCharityImage("");
+
+  fetchCharities();
+  toast.success("Charity Updated ✏️");
+};
 
   await supabase.from("charities").insert([
     {
@@ -488,15 +510,16 @@ const totalPool = activeUsers.length * 99 + jackpot;
   />
 
   <button
-    onClick={addCharity}
-    className="bg-blue-500 px-3 py-1 text-white rounded"
-  >
-    Add
-  </button>
+  onClick={editId ? updateCharity : addCharity}
+  className="bg-blue-500 px-3 py-1 text-white rounded"
+>
+  {editId ? "Update" : "Add"}
+</button>
 
 </div>
 
 {charities.map((c) => (
+  
   <div
     key={c.id}
     className="bg-white/20 p-2 mt-2 text-white flex justify-between items-center rounded"
@@ -505,7 +528,17 @@ const totalPool = activeUsers.length * 99 + jackpot;
       <b>{c.name}</b>
       <p className="text-sm">{c.description}</p>
     </div>
-
+<button
+  onClick={() => {
+    setEditId(c.id);
+    setNewCharity(c.name);
+    setCharityDesc(c.description);
+    setCharityImage(c.image_url);
+  }}
+  className="bg-yellow-500 px-2 rounded"
+>
+  Edit ✏️
+</button>
     <button
       onClick={() => deleteCharity(c.id)}
       className="bg-red-500 px-2 rounded"
