@@ -16,38 +16,46 @@ function Charities() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 px-4 py-6">
 
       <h1 className="text-3xl text-white mb-6 text-center">
         ❤️ Charities
       </h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-6">
-  {charities.map((c) => (
-    <div
-      key={c.id}
-      className="w-full bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-md hover:scale-[1.02] transition"
-    >
-      
-      <div className="w-full h-48 overflow-hidden rounded-lg">
-        <img
-          src={c.image_url}
-          alt={c.name}
-          className="w-full h-full object-cover object-center"
-        />
+      {/* ✅ FIX: center + width control */}
+      <div className="max-w-7xl mx-auto">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          
+          {charities.map((c) => (
+            <div
+              key={c.id}
+              className="w-full bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-md hover:scale-[1.02] transition"
+            >
+
+              {/* ✅ IMAGE FIX */}
+              <div className="w-full h-48 overflow-hidden rounded-lg">
+                <img
+                  src={c.image_url}
+                  alt={c.name}
+                  className="w-full h-full object-cover object-center"
+                />
+              </div>
+
+              <h2 className="mt-3 text-lg font-semibold text-white">
+                {c.name}
+              </h2>
+
+              <p className="text-sm text-gray-200">
+                {c.description}
+              </p>
+
+            </div>
+          ))}
+
+        </div>
+
       </div>
-
-      <h2 className="mt-3 text-lg font-semibold text-white">
-        {c.name}
-      </h2>
-
-      <p className="text-sm text-gray-200">
-        {c.description}
-      </p>
-
-    </div>
-  ))}
-</div>
 
     </div>
   );
