@@ -8,18 +8,17 @@ function Admin() {
   const [usersCount, setUsersCount] = useState(0);
   const [subscribers, setSubscribers] = useState(0);
   const [revenue, setRevenue] = useState(0);
-  const [prizePool, setPrizePool] = useState(0);
-
-  // 🔥 NEW
-  const [users, setUsers] = useState([]);
-  const [charities, setCharities] = useState([]);
-
-  const [newCharity, setNewCharity] = useState("");
-  const [charityDesc, setCharityDesc] = useState("");
-  const [charityImage, setCharityImage] = useState("");
+  const [prizePool, setPrizePool] = useState(0); // 🔥 NEW
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const [users, setUsers] = useState([]);
+const [charities, setCharities] = useState([]);
+
+const [newCharity, setNewCharity] = useState("");
+const [charityDesc, setCharityDesc] = useState("");
+const [charityImage, setCharityImage] = useState("");
 
   // ================= FETCH =================
   const fetchDraws = async () => {
@@ -51,126 +50,78 @@ function Admin() {
     setSubscribers(total);
     setRevenue(total * 99);
 
-    // 🔥 jackpot include
-    const { data: settings } = await supabase
-      .from("settings")
-      .select("*")
-      .eq("id", 1)
-      .maybeSingle();
-
-    const jackpot = settings?.jackpot_pool || 0;
-
-    setPrizePool(total * 99 + jackpot);
+    // 🔥 PRIZE POOL (40% of revenue)
+    setPrizePool(Math.floor(total * 99 * 0.4));
   };
-
-  const fetchUsers = async () => {
-    const { data } = await supabase.from("profiles").select("*");
-    setUsers(data || []);
-  };
-
-  const fetchCharities = async () => {
-    const { data } = await supabase.from("charities").select("*");
-    setCharities(data || []);
-  };
-
-  // ================= ROLE =================
-  const toggleRole = async (id, role) => {
-    await supabase
-      .from("profiles")
-      .update({
-        role: role === "admin" ? "user" : "admin",
-      })
-      .eq("id", id);
-
-    toast.success("Role updated ✅");
-    fetchUsers();
-  };
-
   // ================= SIMULATION =================
-  const simulateDraw = () => {
-    const nums = Array.from({ length: 5 }, () =>
-      Math.floor(Math.random() * 45) + 1
-    );
+const simulateDraw = () => {
+  const nums = Array.from({ length: 5 }, () =>
+    Math.floor(Math.random() * 45) + 1
+  );
 
-    toast(`Simulation: ${nums.join(", ")}`);
-  };
-
+  toast(`Simulation: ${nums.join(", ")}`);
+};
   // ================= RUN DRAW =================
   const runDraw = async () => {
-    const drawNumbers = Array.from({ length: 5 }, () =>
-      Math.floor(Math.random() * 45) + 1
-    );
+  const drawNumbers = Array.from({ length: 5 }, () =>
+    Math.floor(Math.random() * 45) + 1
+  );
 
-    const { data: drawsData } = await supabase.from("draws").select("*");
+  const { data: drawsData } = await supabase.from("draws").select("*");
 
-    if (!drawsData || drawsData.length === 0) {
-      return toast.error("No participants ❌");
-    }
+  if (!drawsData || drawsData.length === 0) {
+    return toast.error("No participants ❌");
+  }
 
-    const { data: users } = await supabase.from("profiles").select("*");
-    const activeUsers = users.filter(u => u.subscription_status === "active");
+  // 🔥 ACTIVE USERS
+  const { data: users } = await supabase.from("profiles").select("*");
+  const activeUsers = users.filter(u => u.subscription_status === "active");
 
-    // 🔥 jackpot fetch
-    const { data: settings } = await supabase
-      .from("settings")
-      .select("*")
-      .eq("id", 1)
-      .maybeSingle();
+  const totalPool = activeUsers.length * 99;
 
-    let jackpot = settings?.jackpot_pool || 0;
+  let winners5 = [];
+  let winners4 = [];
+  let winners3 = [];
 
-    const totalPool = activeUsers.length * 99 + jackpot;
+  // MATCH CALCULATION
+  for (let d of drawsData) {
+  const userNumbers = d.numbers.split(",").map(Number);
 
-    let winners5 = [];
+  const matchCount = userNumbers.filter(n =>
+    drawNumbers.includes(n)
+  ).length;
 
-    for (let d of drawsData) {
-      const userNumbers = d.numbers.split(",").map(Number);
+  let result = "😢 No Win";
+  let prize = 0;
 
-      const matchCount = userNumbers.filter(n =>
-        drawNumbers.includes(n)
-      ).length;
+  if (matchCount === 5) {
+    result = "🥇 Jackpot";
+    prize = Math.floor((totalPool * 0.4));
+  } else if (matchCount === 4) {
+    result = "🥈 4 Matches";
+    prize = Math.floor((totalPool * 0.35));
+  } else if (matchCount === 3) {
+    result = "🥉 3 Matches";
+    prize = Math.floor((totalPool * 0.25));
+  }
 
-      let result = "😢 No Win";
-      let prize = 0;
+  await supabase
+    .from("draws")
+    .update({
+      matches: matchCount,
+      result: `${result} | Prize: ₹${prize}`,
+    })
+    .eq("id", d.id);
+}
 
-      if (matchCount === 5) {
-        result = "🥇 Jackpot";
-        prize = Math.floor(totalPool * 0.4);
-        winners5.push(d);
-      } else if (matchCount === 4) {
-        result = "🥈 4 Matches";
-        prize = Math.floor(totalPool * 0.35);
-      } else if (matchCount === 3) {
-        result = "🥉 3 Matches";
-        prize = Math.floor(totalPool * 0.25);
-      }
+  // 🔥 JACKPOT MESSAGE
+  if (winners5.length === 0) {
+    toast("No jackpot winner — rollover 🔁");
+  }
 
-      await supabase
-        .from("draws")
-        .update({
-          matches: matchCount,
-          result: `${result} | Prize: ₹${prize}`,
-        })
-        .eq("id", d.id);
-    }
-
-    // 🔥 jackpot rollover
-    if (winners5.length === 0) {
-      await supabase
-        .from("settings")
-        .upsert({ id: 1, jackpot_pool: totalPool });
-
-      toast("No jackpot winner — rollover 🔁");
-    } else {
-      await supabase
-        .from("settings")
-        .upsert({ id: 1, jackpot_pool: 0 });
-    }
-
-    toast.success("Draw completed 🎯");
-    fetchDraws();
-    fetchSubscribers();
-  };
+  toast.success("Draw completed 🎯");
+  fetchDraws();
+};
 
   // ================= VERIFY =================
   const verifyWinner = async (id, status) => {
@@ -218,8 +169,6 @@ function Admin() {
         fetchDraws(),
         fetchUsersCount(),
         fetchSubscribers(),
-        fetchUsers(),
-        fetchCharities(),
       ]);
     }
 
@@ -239,59 +188,127 @@ function Admin() {
       </h1>
     );
 
+  // ================= UI =================
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
 
-      <motion.div className="max-w-5xl mx-auto bg-white/10 backdrop-blur-lg p-6 rounded-2xl">
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-5xl mx-auto bg-white/10 backdrop-blur-lg p-6 rounded-2xl shadow-xl border border-white/20"
+      >
 
         <h1 className="text-3xl font-bold text-white mb-4">
           🧑‍💻 Admin Dashboard
         </h1>
-
+      
+        {/* RUN DRAW */}
         <div className="flex gap-3 mb-4">
-          <button onClick={runDraw} className="bg-pink-500 px-4 py-2 rounded text-white">
-            Run Monthly Draw 🎯
-          </button>
 
-          <button onClick={simulateDraw} className="bg-yellow-500 px-4 py-2 rounded text-white">
-            Simulate 🧪
-          </button>
-        </div>
+  <button
+    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg"
+    onClick={runDraw}
+  >
+    Run Monthly Draw 🎯
+  </button>
 
-        {/* STATS */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-white mb-6">
-          <div className="bg-white/20 p-3 rounded">Users: {usersCount}</div>
-          <div className="bg-white/20 p-3 rounded">Draws: {draws.length}</div>
-          <div className="bg-white/20 p-3 rounded">Subscribers: {subscribers}</div>
-          <div className="bg-white/20 p-3 rounded">Revenue: ₹{revenue}</div>
-          <div className="bg-white/20 p-3 rounded">Pool: ₹{prizePool}</div>
-        </div>
+  <button
+    onClick={simulateDraw}
+    className="bg-yellow-500 text-white px-4 py-2 rounded-xl"
+  >
+    Simulate 🧪
+  </button>
 
-        {/* USERS */}
-        <h2 className="text-white mt-6">Users</h2>
-        {users.map(u => (
-          <div key={u.id} className="bg-white/20 p-2 mb-2 text-white flex justify-between">
-            {u.id.slice(0,6)} | {u.role}
-            <button onClick={() => toggleRole(u.id, u.role)}>Toggle Role</button>
+</div>
+
+        {/* 🔥 ANALYTICS UPGRADE */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 text-white">
+
+          <div className="bg-white/20 p-4 rounded">
+            👤 Users
+            <p className="text-xl font-bold">{usersCount}</p>
           </div>
-        ))}
 
-        {/* CHARITIES */}
-        <h2 className="text-white mt-6">Charities</h2>
+          <div className="bg-white/20 p-4 rounded">
+            🎯 Draws
+            <p className="text-xl font-bold">{draws.length}</p>
+          </div>
 
-        <input value={newCharity} onChange={(e)=>setNewCharity(e.target.value)} placeholder="Name" className="p-2 m-1 rounded"/>
-        <input value={charityDesc} onChange={(e)=>setCharityDesc(e.target.value)} placeholder="Description" className="p-2 m-1 rounded"/>
-        <input value={charityImage} onChange={(e)=>setCharityImage(e.target.value)} placeholder="Image URL" className="p-2 m-1 rounded"/>
+          <div className="bg-white/20 p-4 rounded">
+            💎 Subscribers
+            <p className="text-xl font-bold">{subscribers}</p>
+          </div>
 
-        <button onClick={async () => {
-          await supabase.from("charities").insert([{
-            name: newCharity,
-            description: charityDesc,
-            image_url: charityImage
-          }]);
-          setNewCharity(""); setCharityDesc(""); setCharityImage("");
-          fetchCharities();
-        }} className="bg-blue-500 px-3 py-1 text-white rounded">Add</button>
+          <div className="bg-white/20 p-4 rounded">
+            💰 Revenue
+            <p className="text-xl font-bold">₹{revenue}</p>
+          </div>
+
+          <div className="bg-white/20 p-4 rounded">
+            🏆 Prize Pool
+            <p className="text-xl font-bold">₹{prizePool}</p>
+          </div>
+
+        </div>
+
+        {/* DRAWS */}
+        <ul className="space-y-2">
+          {draws.map((d) => (
+            <li
+              key={d.id}
+              className="bg-white/20 text-white p-3 rounded flex justify-between"
+            >
+              <div>
+                🎯 {d.numbers} | Matches: {d.matches}
+                <br />
+                Status: 
+<span
+  className={
+    d.verification_status === "approved"
+      ? "text-green-400"
+      : d.verification_status === "rejected"
+      ? "text-red-400"
+      : "text-yellow-300"
+  }
+>
+  {d.verification_status || "pending"}
+</span>
+
+                <div className="mt-2">
+
+                  {d.proof_url && (
+                    <a href={d.proof_url} target="_blank" rel="noreferrer">
+                      📸 View
+                    </a>
+                  )}
+
+                  <button
+                    className="bg-green-500 px-2 ml-2 rounded hover:shadow-pink-500/50"
+                    onClick={() => verifyWinner(d.id, "approved")}
+                  >
+                    Approve
+                  </button>
+
+                  <button
+                    className="bg-red-500 px-2 ml-2 rounded hover:shadow-pink-500/50"
+                    onClick={() => verifyWinner(d.id, "rejected")}
+                  >
+                    Reject
+                  </button>
+
+                </div>
+              </div>
+
+              <button
+                className="bg-red-500 px-2 rounded hover:shadow-pink-500/50"
+                onClick={() => deleteUserData(d.user_id)}
+              >
+                Delete ❌
+              </button>
+            </li>
+          ))}
+        </ul>
 
       </motion.div>
     </div>
