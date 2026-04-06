@@ -47,10 +47,27 @@ const deleteUser = async (id) => {
   fetchUsersCount();
 };
   // ================= CHARITY ADD AND DELETE =================
-  const addCharity = async () => {
+  // ✅ ADD
+const addCharity = async () => {
   if (!newCharity) return;
 
-  const updateCharity = async () => {
+  await supabase.from("charities").insert([
+    {
+      name: newCharity,
+      description: charityDesc,
+      image_url: charityImage,
+    },
+  ]);
+
+  setNewCharity("");
+  setCharityDesc("");
+  setCharityImage("");
+
+  fetchCharities();
+  toast.success("Charity Added ✅");
+};
+
+const updateCharity = async () => {
   if (!editId) return;
 
   await supabase
@@ -69,22 +86,6 @@ const deleteUser = async (id) => {
 
   fetchCharities();
   toast.success("Charity Updated ✏️");
-};
-
-  await supabase.from("charities").insert([
-    {
-      name: newCharity,
-      description: charityDesc,
-      image_url: charityImage,
-    },
-  ]);
-
-  setNewCharity("");
-  setCharityDesc("");
-  setCharityImage("");
-
-  fetchCharities();
-  toast.success("Charity Added ✅");
 };
 
 const deleteCharity = async (id) => {
