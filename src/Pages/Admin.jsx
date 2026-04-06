@@ -74,7 +74,17 @@ function Admin() {
       (u) => u.subscription_status === "active"
     );
 
-    const totalPool = activeUsers.length * 99;
+    // 🔥 GET OLD JACKPOT
+const { data: settings } = await supabase
+  .from("settings")
+  .select("*")
+  .eq("id", 1)
+  .maybeSingle();
+
+let jackpot = settings?.jackpot_pool || 0;
+
+// 🔥 FINAL POOL
+const totalPool = activeUsers.length * 99 + jackpot;
 
     let winners5 = [];
     let winners4 = [];
@@ -133,8 +143,20 @@ function Admin() {
 
     // 🔥 JACKPOT MESSAGE
     if (winners5.length === 0) {
-      toast("No jackpot winner — rollover 🔁");
-    }
+  // 🔥 SAVE FULL POOL FOR NEXT TIME
+  await supabase
+    .from("settings")
+    .upsert({ id: 1, jackpot_pool: totalPool });
+
+  toast(`No jackpot winner — ₹${totalPool} rolled over 🔁`);
+} else {
+  // 🔥 RESET JACKPOT
+  await supabase
+    .from("settings")
+    .upsert({ id: 1, jackpot_pool: 0 });
+
+  toast("Jackpot won! Pool reset 🎉");
+}
 
     toast.success("Draw completed 🎯");
 
@@ -294,7 +316,7 @@ function Admin() {
       <span
         className={
           d.verification_status === "approved"
-            ? "text-green-400 ml-2"
+            ? "text-green-400 ml-1"
             : d.verification_status === "rejected"
             ? "text-red-400 ml-2"
             : "text-yellow-300 ml-2"
