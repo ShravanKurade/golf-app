@@ -283,8 +283,7 @@ function Admin() {
           {draws.map((d) => (
             <li
   key={d.id}
-  className="bg-white/20 text-white p-4 rounded-xl flex justify-between items-center shadow-md"
->
+  className="bg-white/20 text-white p-4 rounded-xl flex justify-between items-center shadow-md hover:scale-[1.01] transition">
   <div>
     <p className="font-semibold">
       🎯 {d.numbers} | Matches: {d.matches}
@@ -295,10 +294,10 @@ function Admin() {
       <span
         className={
           d.verification_status === "approved"
-            ? "text-green-400 ml-1"
+            ? "text-green-400 ml-2"
             : d.verification_status === "rejected"
-            ? "text-red-400 ml-1"
-            : "text-yellow-300 ml-1"
+            ? "text-red-400 ml-2"
+            : "text-yellow-300 ml-2"
         }
       >
         {d.verification_status || "pending"}
