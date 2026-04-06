@@ -6,6 +6,9 @@ import toast from "react-hot-toast";
 
 function Dashboard() {
   const navigate = useNavigate();
+
+  const [proofFile, setProofFile] = useState(null);
+  const [timeLeft, setTimeLeft] = useState("");
   const [draws, setDraws] = useState([]);
   const [plan, setPlan] = useState("monthly");
   const [scores, setScores] = useState([]);
@@ -114,6 +117,22 @@ function Dashboard() {
   };
 
   useEffect(() => {
+
+    // ⏳ TIMER
+const interval = setInterval(() => {
+  const nextDraw = new Date();
+  nextDraw.setDate(nextDraw.getDate() + 7);
+
+  const diff = nextDraw - new Date();
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+
+  setTimeLeft(`${days}d ${hours}h left`);
+}, 1000);
+
+return () => clearInterval(interval);
+
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -202,6 +221,33 @@ function Dashboard() {
 
   // ================= DRAW =================
   const runDraw = async () => {
+
+    // 📸 UPLOAD PROOF
+const uploadProof = async (drawId) => {
+  if (!proofFile) return toast.error("Select file");
+
+  const fileName = `${Date.now()}_${proofFile.name}`;
+
+  const { error } = await supabase.storage
+    .from("proofs")
+    .upload(fileName, proofFile);
+
+  if (error) return toast.error("Upload failed");
+
+  const publicUrl = supabase
+    .storage
+    .from("proofs")
+    .getPublicUrl(fileName).data.publicUrl;
+
+  await supabase
+    .from("draws")
+    .update({ proof_url: publicUrl })
+    .eq("id", drawId);
+
+  toast.success("Proof uploaded ✅");
+  fetchHistory();
+};
+
     if (subscription !== "active")
       return toast.error("Buy Premium first");
 
@@ -263,6 +309,12 @@ const totalWinnings = draws.reduce((sum, d) => {
   const match = d.result?.match(/₹(\d+)/);
   return sum + (match ? Number(match[1]) : 0);
 }, 0);
+
+// 💰 TOTAL DONATED
+const totalDonated = draws.reduce((sum, d) => {
+  const match = d.result?.match(/\((\d+)%\)/);
+  return sum + (match ? Number(match[1]) : 0);
+}, 0);
   // ================= UI =================
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
@@ -277,11 +329,17 @@ const totalWinnings = draws.reduce((sum, d) => {
         <h1 className="text-3xl font-bold text-white text-center">
           🎯 Your Golf Dashboard
         </h1>
+        <p className="text-white text-center mt-2">
+  ⏳ Next Draw: {timeLeft}
+</p>
         <p className="text-white text-center mt-2 mb-4 text-sm opacity-90">
             Play Golf. Win Rewards. Change Lives ❤️
         </p>
         <h2 className="text-white text-xl mt-4 text-center">
   💰 Total Winnings: ₹{totalWinnings}
+</h2>
+<h2 className="text-white text-lg text-center">
+  ❤️ Total Donated: {totalDonated}%
 </h2>
 <h2 className="text-white mt-6 text-xl text-center">
   Your Draw History
@@ -293,10 +351,32 @@ const totalWinnings = draws.reduce((sum, d) => {
     className="bg-white/20 p-3 mt-2 text-white rounded"
   >
     🎯 Numbers: {d.numbers} <br />
+
     Result: {d.result || "Pending"}
+
+    {/* 🏆 WINNER BADGE */}
+    {d.result?.includes("Jackpot") && (
+      <span className="text-yellow-300 font-bold ml-2">
+        🏆 Winner
+      </span>
+    )}
+
+    {/* 📸 FILE INPUT */}
+    <input
+      type="file"
+      onChange={(e) => setProofFile(e.target.files[0])}
+      className="mt-2"
+    />
+
+    {/* 📸 UPLOAD BUTTON */}
+    <button
+      onClick={() => uploadProof(d.id)}
+      className="bg-blue-500 px-2 py-1 rounded text-white mt-1"
+    >
+      Upload Proof 📸
+    </button>
   </div>
 ))}
-
         
         
 
