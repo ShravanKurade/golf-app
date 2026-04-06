@@ -34,17 +34,15 @@ function Admin() {
   const fetchSubscribers = async () => {
     const { data } = await supabase.from("profiles").select("*");
 
-    const activeUsers = data?.filter(
+    const activeUsers = (data || []).filter(
       (u) => u.subscription_status === "active"
     );
 
-    const total = activeUsers?.length || 0;
+    const total = activeUsers.length;
 
     setSubscribers(total);
     setRevenue(total * 99);
-
-    // ✅ FULL POOL (not 40%)
-    setPrizePool(total * 99);
+    setPrizePool(total * 99); // full pool
   };
 
   // ================= SIMULATION =================
@@ -69,7 +67,9 @@ function Admin() {
     }
 
     const { data: users } = await supabase.from("profiles").select("*");
-    const activeUsers = users.filter(u => u.subscription_status === "active");
+    const activeUsers = (users || []).filter(
+      (u) => u.subscription_status === "active"
+    );
 
     const totalPool = activeUsers.length * 99;
 
@@ -77,11 +77,13 @@ function Admin() {
     let winners4 = [];
     let winners3 = [];
 
-    // 🔥 FIRST LOOP → FIND WINNERS
+    // 🔥 FIND WINNERS
     for (let d of drawsData) {
-      const userNumbers = d.numbers.split(",").map(Number);
+      const userNumbers = (d.numbers || "")
+        .split(",")
+        .map((n) => Number(n.trim()));
 
-      const matchCount = userNumbers.filter(n =>
+      const matchCount = userNumbers.filter((n) =>
         drawNumbers.includes(n)
       ).length;
 
@@ -95,23 +97,23 @@ function Admin() {
         .eq("id", d.id);
     }
 
-    // 🔥 CORRECT SPLIT
+    // 🔥 SPLIT LOGIC
     const prize5 = Math.floor((totalPool * 0.4) / (winners5.length || 1));
     const prize4 = Math.floor((totalPool * 0.35) / (winners4.length || 1));
     const prize3 = Math.floor((totalPool * 0.25) / (winners3.length || 1));
 
-    // 🔥 SECOND LOOP → UPDATE RESULTS
+    // 🔥 UPDATE RESULTS
     for (let d of drawsData) {
       let result = "😢 No Win";
       let prize = 0;
 
-      if (winners5.find(w => w.id === d.id)) {
+      if (winners5.some((w) => w.id === d.id)) {
         result = "🥇 Jackpot";
         prize = prize5;
-      } else if (winners4.find(w => w.id === d.id)) {
+      } else if (winners4.some((w) => w.id === d.id)) {
         result = "🥈 4 Matches";
         prize = prize4;
-      } else if (winners3.find(w => w.id === d.id)) {
+      } else if (winners3.some((w) => w.id === d.id)) {
         result = "🥉 3 Matches";
         prize = prize3;
       }
@@ -124,12 +126,12 @@ function Admin() {
         .eq("id", d.id);
     }
 
-    // 🔥 JACKPOT MESSAGE
     if (winners5.length === 0) {
       toast("No jackpot winner — rollover 🔁");
     }
 
     toast.success("Draw completed 🎯");
+
     fetchDraws();
     fetchSubscribers();
   };
@@ -166,6 +168,8 @@ function Admin() {
   // ================= ADMIN CHECK =================
   const checkAdmin = async () => {
     const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return setLoading(false);
 
     const { data } = await supabase
       .from("profiles")
@@ -213,11 +217,9 @@ function Admin() {
           🧑‍💻 Admin Dashboard
         </h1>
 
-        {/* BUTTONS */}
         <div className="flex gap-3 mb-4">
-
           <button
-            className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow-lg"
+            className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl"
             onClick={runDraw}
           >
             Run Monthly Draw 🎯
@@ -229,93 +231,20 @@ function Admin() {
           >
             Simulate 🧪
           </button>
-
         </div>
 
-        {/* STATS */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 text-white">
-
-          <div className="bg-white/20 p-4 rounded">
-            👤 Users
-            <p className="text-xl font-bold">{usersCount}</p>
-          </div>
-
-          <div className="bg-white/20 p-4 rounded">
-            🎯 Draws
-            <p className="text-xl font-bold">{draws.length}</p>
-          </div>
-
-          <div className="bg-white/20 p-4 rounded">
-            💎 Subscribers
-            <p className="text-xl font-bold">{subscribers}</p>
-          </div>
-
-          <div className="bg-white/20 p-4 rounded">
-            💰 Revenue
-            <p className="text-xl font-bold">₹{revenue}</p>
-          </div>
-
-          <div className="bg-white/20 p-4 rounded">
-            🏆 Prize Pool
-            <p className="text-xl font-bold">₹{prizePool}</p>
-          </div>
-
+          <div className="bg-white/20 p-4 rounded">👤 {usersCount}</div>
+          <div className="bg-white/20 p-4 rounded">🎯 {draws.length}</div>
+          <div className="bg-white/20 p-4 rounded">💎 {subscribers}</div>
+          <div className="bg-white/20 p-4 rounded">₹{revenue}</div>
+          <div className="bg-white/20 p-4 rounded">🏆 ₹{prizePool}</div>
         </div>
 
-        {/* DRAWS */}
         <ul className="space-y-2">
           {draws.map((d) => (
-            <li
-              key={d.id}
-              className="bg-white/20 text-white p-3 rounded flex justify-between"
-            >
-              <div>
-                🎯 {d.numbers} | Matches: {d.matches}
-                <br />
-                Status:
-                <span
-                  className={
-                    d.verification_status === "approved"
-                      ? "text-green-400"
-                      : d.verification_status === "rejected"
-                      ? "text-red-400"
-                      : "text-yellow-300"
-                  }
-                >
-                  {d.verification_status || "pending"}
-                </span>
-
-                <div className="mt-2">
-
-                  {d.proof_url && (
-                    <a href={d.proof_url} target="_blank" rel="noreferrer">
-                      📸 View
-                    </a>
-                  )}
-
-                  <button
-                    className="bg-green-500 px-2 ml-2 rounded"
-                    onClick={() => verifyWinner(d.id, "approved")}
-                  >
-                    Approve
-                  </button>
-
-                  <button
-                    className="bg-red-500 px-2 ml-2 rounded"
-                    onClick={() => verifyWinner(d.id, "rejected")}
-                  >
-                    Reject
-                  </button>
-
-                </div>
-              </div>
-
-              <button
-                className="bg-red-500 px-2 rounded"
-                onClick={() => deleteUserData(d.user_id)}
-              >
-                Delete ❌
-              </button>
+            <li key={d.id} className="bg-white/20 p-3 text-white rounded">
+              🎯 {d.numbers} | {d.result}
             </li>
           ))}
         </ul>
