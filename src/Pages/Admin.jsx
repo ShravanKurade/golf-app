@@ -1,3 +1,4 @@
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { supabase } from "../supabase";
@@ -324,7 +325,11 @@ const totalPool = activeUsers.length * 99 + jackpot;
         Access Denied ❌
       </h1>
     );
-
+    const chartData = [
+  { name: "Users", value: usersCount },
+  { name: "Subscribers", value: subscribers },
+  { name: "Revenue", value: totalRevenue },
+];
   // ================= UI =================
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
@@ -362,7 +367,18 @@ const totalPool = activeUsers.length * 99 + jackpot;
 
         {/* STATS */}
   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 text-white">
+<h2 className="text-white mt-6 text-xl">Analytics Chart 📊</h2>
 
+<div className="bg-white/20 p-4 rounded-xl mt-4">
+  <ResponsiveContainer width="100%" height={250}>
+    <BarChart data={chartData}>
+      <XAxis dataKey="name" stroke="#fff" />
+      <YAxis stroke="#fff" />
+      <Tooltip />
+      <Bar dataKey="value" />
+    </BarChart>
+  </ResponsiveContainer>
+</div>
   <div className="bg-white/20 p-4 rounded-xl text-center">
     👤 Users
     <p className="text-xl font-bold">{usersCount}</p>
