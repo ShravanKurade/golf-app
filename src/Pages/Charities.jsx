@@ -30,12 +30,12 @@ function Charities() {
     className="bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-md hover:scale-[1.02] transition"
   >
     
-    {/* 🖼️ IMAGE (FULL VISIBLE - NO CROP) */}
-    <div className="w-full h-48 bg-white flex items-center justify-center rounded-lg">
+    {/* 🖼️ IMAGE (NO WHITE SPACE - PREMIUM) */}
+    <div className="w-full h-48 overflow-hidden rounded-lg">
       <img
         src={c.image_url}
         alt={c.name}
-        className="max-h-full max-w-full object-contain"
+        className="w-full h-full object-cover object-center hover:scale-105 transition duration-300"
       />
     </div>
 
