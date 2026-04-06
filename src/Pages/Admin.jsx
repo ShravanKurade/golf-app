@@ -284,6 +284,8 @@ const totalPool = activeUsers.length * 99 + jackpot;
         fetchDraws(),
         fetchUsersCount(),
         fetchSubscribers(),
+        fetchUsers(),
+        fetchCharities(),
       ]);
     }
 
