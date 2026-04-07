@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 
 function Dashboard() {
   const navigate = useNavigate();
-
+  const [subscriptionPlan, setSubscriptionPlan] = useState("");
   const [proofFile, setProofFile] = useState(null);
   const [timeLeft, setTimeLeft] = useState("");
   const [draws, setDraws] = useState([]);
@@ -86,7 +86,7 @@ function Dashboard() {
 
     const { data } = await supabase
       .from("profiles")
-      .select("subscription_status, subscription_end")
+      .select("subscription_status, subscription_end,subscription_plan")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -106,6 +106,7 @@ function Dashboard() {
       } else {
         setSubscription("active");
         setSubscriptionEnd(end);
+        setSubscriptionPlan(data?.subscription_plan || "");
       }
     } else {
       setSubscription("inactive");
@@ -437,7 +438,7 @@ const totalDonated = draws.reduce((sum, d) => {
 
         {/* SUBSCRIPTION */}
         <button
-  disabled={subscription === "active" && currentPlan === plan}  // ✅ IMPORTANT
+  disabled={subscription === "active" && subscriptionPlan === plan}  // ✅ IMPORTANT
   className={`w-full px-4 py-2 rounded-xl text-white mt-3 transition duration-300 ${
     subscription === "active"
       ? "bg-green-500 cursor-not-allowed"
