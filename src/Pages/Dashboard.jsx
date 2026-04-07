@@ -187,10 +187,21 @@ function Dashboard() {
 
   // ================= PAYMENT =================
   const handlePayment = async () => {
-    toast("Redirecting to payment... 💳");
+  const { data: { user } } = await supabase.auth.getUser();
 
-    setTimeout(async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const amount = plan === "monthly" ? 9900 : 99900;
+
+  const options = {
+    key: "rzp_test_SKs8rO9rZ7O1Uj", // 🔑 tera key
+    amount: amount,
+    currency: "INR",
+    name: "Golf Charity App",
+    description: "Subscription Payment",
+
+    handler: async function (response) {
+      console.log("Payment Success:", response);
 
       const start = new Date();
       let end = new Date();
@@ -211,12 +222,21 @@ function Dashboard() {
         })
         .eq("id", user.id);
 
-      setSubscription("active");
-      setSubscriptionEnd(end);
+      toast.success("Payment successful 💳");
+    },
 
-      toast.success(`Subscribed (${plan}) ✅`);
-    }, 1500);
+    prefill: {
+      email: user.email,
+    },
+
+    theme: {
+      color: "#9333ea",
+    },
   };
+
+  const rzp = new window.Razorpay(options);
+  rzp.open();
+};
 
   // ================= DRAW =================
   // 📸 UPLOAD PROOF
@@ -379,7 +399,16 @@ const totalDonated = draws.reduce((sum, d) => {
         
         {/* PLAN SELECT */}
         <h3 className="text-white mt-2">Choose Plan 💳</h3>
-
+        <button
+  className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mt-3"
+  onClick={handlePayment}
+>
+  {subscription === "active"
+    ? "✅ Premium Active"
+    : plan === "monthly"
+      ? "Buy Monthly ₹99 💳"
+      : "Buy Yearly ₹999 💳"}
+</button>
         <select
           className="bg-white/20 text-white p-2 rounded w-full mt-2"
           value={plan}
