@@ -444,6 +444,7 @@ const totalPool = activeUsers.length * 99 + jackpot;
         fetchUsers(),
         fetchCharities(),
         fetchAnalytics(),
+        fetchDeletedUsers(),
       ]);
     }
 
@@ -694,55 +695,37 @@ const totalPool = activeUsers.length * 99 + jackpot;
 
 
 
-</div>
 
-{users.map((u) => (
+</div>
+<h2 className="text-white mt-6 text-xl">🗑️ Deleted Users</h2>
+
+{deletedUsers.map((u) => (
   <div
     key={u.id}
-    className="bg-white/20 p-2 mt-2 text-white flex justify-between items-center rounded"
+    className="bg-red-200/20 p-2 mt-2 text-white flex justify-between items-center rounded"
   >
     <div>
       {u.id.slice(0, 6)} <br />
-      Role: {u.role || "user"}
+      (Deleted User)
     </div>
 
     <div className="flex gap-2">
-
       <button
-        onClick={() => toggleRole(u.id, u.role)}
-        className="bg-blue-500 px-2 rounded"
+        onClick={() => undoUser(u.id)}
+        className="bg-green-500 px-2 rounded"
       >
-        Toggle Role
+        Undo ✅
       </button>
 
-      {!u.is_deleted ? (
-        <button
-          onClick={() => deleteUser(u.id)}
-          className="bg-red-500 px-2 rounded"
-        >
-          Delete ❌
-        </button>
-      ) : (
-        <>
-          <button
-            onClick={() => deleteUserPermanent(u.id)}
-            className="bg-red-700 px-2 rounded"
-          >
-            Delete Permanently ⚠️
-          </button>
-
-          <button
-            onClick={() => undoUser(u.id)}
-            className="bg-green-500 px-2 rounded"
-          >
-            Undo ✅
-          </button>
-        </>
-      )}
-
+      <button
+        onClick={() => deleteUserPermanent(u.id)}
+        className="bg-red-700 px-2 rounded"
+      >
+        Delete Permanently ⚠️
+      </button>
     </div>
-  </div>   
-))} 
+  </div>
+))}
       </motion.div>
     </div>
   );
