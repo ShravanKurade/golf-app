@@ -23,6 +23,20 @@ function Admin() {
   const [loading, setLoading] = useState(true);
 
   
+  const undoLastDelete = async () => {
+  if (!lastDeletedUser) return;
+
+  await supabase
+    .from("profiles")
+    .update({ is_deleted: false })
+    .eq("id", lastDeletedUser.id);
+
+  toast.success("Restored ✅");
+
+  setLastDeletedUser(null);
+
+  fetchUsers();
+};
   // ================= TOGGLE FUNCTION =================
 
 const toggleRole = async (id, role) => {
