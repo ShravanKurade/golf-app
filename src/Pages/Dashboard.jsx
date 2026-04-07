@@ -200,7 +200,7 @@ function Dashboard() {
     currency: "INR",
     name: "Golf Charity App",
     description: "Subscription Payment",
-    image:"https://zjyhtmlzcyipcdcafmqo.supabase.co/storage/v1/object/sign/images/logo.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9hMzkzMzE5Zi1kZmM2LTQyZGMtYTdlOS03MTExNDRlYjY2YWQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvbG9nby5wbmciLCJpYXQiOjE3NzU1NzA0ODksImV4cCI6MTgwNzEwNjQ4OX0.YLcFNJDW9jlfhzda6m3TAbQhdVIIpQCca-KReOL7w6Q",
+    image: "https://zjyhtmlzcyipcdcafmqo.supabase.co/storage/v1/object/public/images/logo.png",
     handler: async function (response) {
   console.log("Payment Success:", response);
 
