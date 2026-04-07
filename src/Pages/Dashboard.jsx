@@ -437,7 +437,7 @@ const totalDonated = draws.reduce((sum, d) => {
 
         {/* SUBSCRIPTION */}
         <button
-  disabled={subscription === "active"}   // ✅ IMPORTANT
+  disabled={subscription === "active" && currentPlan === plan}  // ✅ IMPORTANT
   className={`w-full px-4 py-2 rounded-xl text-white mt-3 transition duration-300 ${
     subscription === "active"
       ? "bg-green-500 cursor-not-allowed"
