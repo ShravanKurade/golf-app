@@ -162,10 +162,38 @@ const updateCharity = async () => {
 };
 
 const deleteCharity = async (id) => {
-  await supabase.from("charities").delete().eq("id", id);
+  await supabase
+    .from("charities")
+    .update({ is_deleted: true })
+    .eq("id", id);
+
   fetchCharities();
-  toast.success("Deleted ❌");
+  toast.success("Charity hidden ❌");
 };
+const undoCharity = async (id) => {
+  await supabase
+    .from("charities")
+    .update({ is_deleted: false })
+    .eq("id", id);
+
+  fetchCharities();
+  toast.success("Restored ✅");
+};
+const deleteCharityPermanent = async (id) => {
+  const confirmDelete = window.confirm("Permanent delete? ⚠️");
+
+  if (!confirmDelete) return;
+
+  await supabase
+    .from("charities")
+    .delete()
+    .eq("id", id);
+
+  fetchCharities();
+  toast.success("Deleted permanently 💀");
+};
+
+
 // ================= FETCH =================
 
 const fetchUsers = async () => {
@@ -176,7 +204,10 @@ const fetchUsers = async () => {
 };
 
   const fetchCharities = async () => {
-  const { data } = await supabase.from("charities").select("*");
+  const { data } = await supabase
+    .from("charities")
+    .select("*")
+
   setCharities(data || []);
 };
 
@@ -229,6 +260,8 @@ const fetchAnalytics = async () => {
   const charity = revenue * 0.1;
   setTotalCharity(charity);
 };
+
+
   // ================= SIMULATION =================
   const simulateDraw = () => {
     const nums = Array.from({ length: 5 }, () =>
@@ -481,7 +514,7 @@ const totalPool = activeUsers.length * 99 + jackpot;
     <p className="text-xl font-bold">₹{revenue}</p>
   </div>
 
-  <div className="bg-white/20 p-4 rounded-xl text-center">
+  <div className="bg-white/20 p-4 rounded-xl text-center"> 
     🏆 Prize Pool
     <p className="text-xl font-bold">₹{prizePool}</p>
   </div>
@@ -595,7 +628,6 @@ const totalPool = activeUsers.length * 99 + jackpot;
 </div>
 
 {charities.map((c) => (
-  
   <div
     key={c.id}
     className="bg-white/20 p-2 mt-2 text-white flex justify-between items-center rounded"
@@ -604,23 +636,48 @@ const totalPool = activeUsers.length * 99 + jackpot;
       <b>{c.name}</b>
       <p className="text-sm">{c.description}</p>
     </div>
-<button
-  onClick={() => {
-    setEditId(c.id);
-    setNewCharity(c.name);
-    setCharityDesc(c.description);
-    setCharityImage(c.image_url);
-  }}
-  className="bg-yellow-500 px-2 rounded"
->
-  Edit ✏️
-</button>
-    <button
-      onClick={() => deleteCharity(c.id)}
-      className="bg-red-500 px-2 rounded"
-    >
-      Delete
-    </button>
+
+    <div className="flex gap-2">
+
+      {/* Edit always */}
+      <button
+        onClick={() => {
+          setEditId(c.id);
+          setNewCharity(c.name);
+          setCharityDesc(c.description);
+          setCharityImage(c.image_url);
+        }}
+        className="bg-yellow-500 px-2 rounded"
+      >
+        Edit ✏️
+      </button>
+
+      {!c.is_deleted ? (
+        <button
+          onClick={() => deleteCharity(c.id)}
+          className="bg-red-500 px-2 rounded"
+        >
+          Delete ❌
+        </button>
+      ) : (
+        <>
+          <button
+            onClick={() => deleteCharityPermanent(c.id)}
+            className="bg-red-700 px-2 rounded"
+          >
+            Delete Permanently ⚠️
+          </button>
+
+          <button
+            onClick={() => undoCharity(c.id)}
+            className="bg-green-500 px-2 rounded"
+          >
+            Undo ✅
+          </button>
+        </>
+      )}
+
+    </div>
   </div>
 ))}
 
