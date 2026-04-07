@@ -61,29 +61,26 @@ const deleteDraw = async (drawId) => {
 };
   // =================DELETE USER =================
 const deleteUser = async (id) => {
-  const userToDelete = users.find(u => u.id === id);
+  if (!window.confirm("Delete user?")) return;
 
-  await supabase.from("profiles").delete().eq("id", id);
+  await supabase
+    .from("profiles")
+    .update({ is_deleted: true })
+    .eq("id", id);
 
-  setLastDeleted({
-    type: "user",
-    data: userToDelete
-  });
-
-  toast((t) => (
-    <span>
-      User deleted ❌
-      <button
-        onClick={() => undoDelete(t.id)}
-        className="ml-2 text-blue-400 underline"
-      >
-        Undo
-      </button>
-    </span>
-  ));
+  toast.success("User hidden ❌");
 
   fetchUsers();
   fetchUsersCount();
+};
+const undoUser = async (id) => {
+  await supabase
+    .from("profiles")
+    .update({ is_deleted: false })
+    .eq("id", id);
+
+  fetchUsers();
+  toast.success("Restored ✅");
 };
 const undoDelete = async (toastId) => {
   if (!lastDeleted) return;
@@ -158,7 +155,11 @@ const deleteCharity = async (id) => {
 // ================= FETCH =================
 
 const fetchUsers = async () => {
-  const { data } = await supabase.from("profiles").select("*");
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("is_deleted", false);
+
   setUsers(data || []);
 };
 
@@ -631,12 +632,21 @@ const totalPool = activeUsers.length * 99 + jackpot;
         Toggle Role
       </button>
 
-      <button
-        onClick={() => deleteUser(u.id)}
-        className="bg-red-500 px-2 rounded"
-      >
-        Delete
-      </button>
+    {!u.is_deleted ? (
+  <button
+    onClick={() => deleteUser(u.id)}
+    className="bg-red-500 px-2 rounded"
+  >
+    Delete ❌
+  </button>
+) : (
+  <button
+    onClick={() => undoUser(u.id)}
+    className="bg-green-500 px-2 rounded"
+  >
+    Undo ✅
+  </button>
+)}
 
     </div>
   </div>
