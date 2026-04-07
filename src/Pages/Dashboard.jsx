@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 function Dashboard() {
+  const [selectedPlan, setSelectedPlan] = useState("monthly");
   const navigate = useNavigate();
   const [subscriptionPlan, setSubscriptionPlan] = useState("");
   const [proofFile, setProofFile] = useState(null);
@@ -192,75 +193,73 @@ function Dashboard() {
 
   if (!user) return;
 
-  const amount = plan === "monthly" ? 9900 : 99900;
+  const amount = selectedPlan === "monthly" ? 99 : 999;
 
-  const options = {
-    key: "rzp_test_SKs8rO9rZ7O1Uj", // 🔑 key
-    amount: amount,
-    currency: "INR",
-    name: "Golf Charity App",
-    description: "Subscription Payment",
-    image: "https://zjyhtmlzcyipcdcafmqo.supabase.co/storage/v1/object/public/images/logo.png",
-    handler: async function (response) {
-  console.log("Payment Success:", response);
+const options = {
+  key: import.meta.env.VITE_RAZORPAY_KEY,
+  amount: amount * 100,   // 🔥 Razorpay paisa paise me leta hai
+  currency: "INR",
+  name: "Golf Charity App",
+  description: "Subscription Payment",
 
-  const start = new Date();
-  let end = new Date();
+  handler: async function (response) {
+    console.log("Payment Success:", response);
 
-  if (plan === "monthly") {
-    end.setDate(start.getDate() + 30);
-  } else {
-    end.setFullYear(start.getFullYear() + 1);
-  }
+    // ✅ DATE CALCULATION
+    const start = new Date();
+    let end = new Date();
 
-  await supabase
-    .from("profiles")
-    .update({
-      subscription_status: "active",
-      subscription_start: start,
-      subscription_end: end,
-      subscription_plan: plan,
-    })
-    .eq("id", user.id);
+    if (selectedPlan === "monthly") {
+      end.setDate(start.getDate() + 30);
+    } else {
+      end.setFullYear(start.getFullYear() + 1);
+    }
 
+    const validTill = end.toLocaleDateString();
+
+    // ✅ SUPABASE UPDATE
+    const { data: { user } } = await supabase.auth.getUser();
+
+    await supabase
+      .from("profiles")
+      .update({
+        subscription_status: "active",
+        subscription_plan: selectedPlan,
+        subscription_amount: amount,   // 🔥 SAME AMOUNT
+        subscription_end: end
+      })
+      .eq("id", user.id);
+
+    // ✅ EMAIL SEND
+    emailjs.send(
+      import.meta.env.VITE_EMAILJS_SERVICE_ID,
+      import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+      {
+        user_email: user.email,
+        valid_till: validTill,
+        plan_amount: amount   // 🔥 SAME AMOUNT
+      },
+      import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+    );
+
+    // ✅ UI UPDATE
     setSubscription("active");
     setSubscriptionEnd(end);
-    setSubscriptionPlan(plan);
-  // ✅ EMAIL SEND CODE
-  const templateParams = {
-    to_email: user.email,
-    plan: plan,
-    end_date: end.toLocaleDateString(),
-  };
 
-  emailjs.send(
-  import.meta.env.VITE_EMAILJS_SERVICE_ID,
-  import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-  templateParams,
-  import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-)
-    .then(() => {
-      console.log("Email sent ✅");
-    })
-    .catch((err) => {
-      console.log("Email error ❌", err);
-    });
+    toast.success("Payment successful 💳 + Email sent 📩");
+  },
 
-  toast.success("Payment successful 💳 + Email sent 📩");
+  prefill: {
+  email: user.email,
 },
 
-    prefill: {
-      email: user.email,
-    },
-
-    theme: {
-      color: "#9333ea",
-    },
-  };
-
-  const rzp = new window.Razorpay(options);
-  rzp.open();
+  theme: {
+    color: "#9333ea",
+  },
 };
+
+const rzp = new window.Razorpay(options);
+rzp.open();};
 
   // ================= DRAW =================
   // 📸 UPLOAD PROOF
@@ -426,8 +425,9 @@ const totalDonated = draws.reduce((sum, d) => {
         
         <select
           className="bg-white/20 text-white p-2 rounded w-full mt-2"
-          value={plan}
-          onChange={(e) => setPlan(e.target.value)}
+          value={selectedPlan}
+          onChange={(e) =>
+          setSelectedPlan(e.target.value)}
         >
           <option value="monthly" className="text-black">
             Monthly ₹99
