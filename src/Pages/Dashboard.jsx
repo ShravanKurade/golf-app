@@ -422,21 +422,7 @@ const totalDonated = draws.reduce((sum, d) => {
           </option>
         </select>
 
-        {/* SUBSCRIPTION */}
-        <button
-          className={`w-full px-4 py-2 rounded-xl text-white mt-3 transition duration-300 ${
-  subscription === "active"
-    ? "bg-green-500 hover:bg-green-600 hover:scale-105 active:scale-95"
-    : "bg-gradient-to-r from-pink-500 to-purple-500 hover:scale-105 hover:shadow-lg active:scale-95"
-}`}
-          onClick={handlePayment}
-        >
-          {subscription === "active"
-            ? "✅ Premium Active"
-            : plan === "monthly"
-              ? "Buy Monthly ₹99 💳"
-              : "Buy Yearly ₹999 💳"}
-        </button>
+        
 
         {/* PLAN DISPLAY */}
         <p className="text-white text-sm mt-1">
