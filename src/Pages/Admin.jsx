@@ -4,6 +4,7 @@ import { supabase } from "../supabase";
 import toast from "react-hot-toast";
 
 function Admin() {
+  const [deletedUsers, setDeletedUsers] = useState([]);
   const [lastDeletedUser, setLastDeletedUser] = useState(null);
   const [editId, setEditId] = useState(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -22,26 +23,6 @@ function Admin() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  
-  const deleteUserPermanent = async (id) => {
-  const confirmDelete = window.confirm("Permanent delete? ⚠️ This cannot be undone");
-
-  if (!confirmDelete) return;
-
-  const { error } = await supabase
-    .from("profiles")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    toast.error("Failed ❌");
-    console.log(error);
-    return;
-  }
-
-  fetchUsers();
-  toast.success("Deleted permanently 💀");
-};
 
   const undoLastDelete = async () => {
   if (!lastDeletedUser) return;
@@ -95,7 +76,22 @@ const deleteDraw = async (drawId) => {
 };
   // =================DELETE USER =================
 const deleteUser = async (id) => {
-  if (!window.confirm("Delete user permanently? ⚠️")) return;
+  if (!window.confirm("Delete user?")) return;
+
+  const userToDelete = users.find(u => u.id === id);
+
+  await supabase
+    .from("profiles")
+    .update({ is_deleted: true })
+    .eq("id", id);
+
+  setLastDeletedUser(userToDelete);
+
+  toast.success("User deleted ❌");
+  fetchUsers();
+};
+const deleteUserPermanent = async (id) => {
+  if (!window.confirm("Permanent delete? ⚠️")) return;
 
   try {
     await fetch("/api/deleteUser", {
@@ -106,12 +102,10 @@ const deleteUser = async (id) => {
       body: JSON.stringify({ userId: id }),
     });
 
-    toast.success("User deleted completely ✅");
-
-    fetchUsers(); // refresh list
+    toast.success("Deleted permanently 💀");
+    fetchUsers();
   } catch (err) {
     toast.error("Delete failed ❌");
-    console.log(err);
   }
 };
 const undoUser = async (id) => {
@@ -203,7 +197,9 @@ const deleteCharityPermanent = async (id) => {
 const fetchUsers = async () => {
   const { data } = await supabase
     .from("profiles")
-    .select("*");
+    .select("*")
+    .eq("is_deleted", false); // 🔥 only active users
+
   setUsers(data || []);
 };
 
@@ -214,7 +210,14 @@ const fetchUsers = async () => {
 
   setCharities(data || []);
 };
+const fetchDeletedUsers = async () => {
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("is_deleted", true);
 
+  setDeletedUsers(data || []);
+};
   const fetchDraws = async () => {
     const { data } = await supabase
       .from("draws")
@@ -705,43 +708,41 @@ const totalPool = activeUsers.length * 99 + jackpot;
 
     <div className="flex gap-2">
 
-  {/* ✅ ONLY ONCE */}
-  <button
-    onClick={() => toggleRole(u.id, u.role)}
-    className="bg-blue-500 px-2 rounded"
-  >
-    Toggle Role
-  </button>
-
-  {/* 🔥 CONDITIONAL */}
-  {!u.is_deleted ? (
-    <button
-      onClick={() => deleteUser(u.id)}
-      className="bg-red-500 px-2 rounded"
-    >
-      Delete ❌
-    </button>
-  ) : (
-    <>
       <button
-        onClick={() => deleteUserPermanent(u.id)}
-        className="bg-red-700 px-2 rounded"
+        onClick={() => toggleRole(u.id, u.role)}
+        className="bg-blue-500 px-2 rounded"
       >
-        Delete Permanently ⚠️
+        Toggle Role
       </button>
 
-      <button
-        onClick={() => undoUser(u.id)}
-        className="bg-green-500 px-2 rounded"
-      >
-        Undo ✅
-      </button>
-    </>
-  )}
+      {!u.is_deleted ? (
+        <button
+          onClick={() => deleteUser(u.id)}
+          className="bg-red-500 px-2 rounded"
+        >
+          Delete ❌
+        </button>
+      ) : (
+        <>
+          <button
+            onClick={() => deleteUserPermanent(u.id)}
+            className="bg-red-700 px-2 rounded"
+          >
+            Delete Permanently ⚠️
+          </button>
 
-</div>
-  </div>
-))}
+          <button
+            onClick={() => undoUser(u.id)}
+            className="bg-green-500 px-2 rounded"
+          >
+            Undo ✅
+          </button>
+        </>
+      )}
+
+    </div>
+  </div>   
+))} 
       </motion.div>
     </div>
   );
