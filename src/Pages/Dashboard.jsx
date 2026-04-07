@@ -12,7 +12,6 @@ function Dashboard() {
   const [proofFile, setProofFile] = useState(null);
   const [timeLeft, setTimeLeft] = useState("");
   const [draws, setDraws] = useState([]);
-  const [plan, setPlan] = useState("monthly");
   const [scores, setScores] = useState([]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState([]);
@@ -231,7 +230,7 @@ const options = {
       .eq("id", user.id);
 
     // ✅ EMAIL SEND
-    emailjs.send(
+    await emailjs.send(
       import.meta.env.VITE_EMAILJS_SERVICE_ID,
       import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
       {
@@ -439,8 +438,11 @@ const totalDonated = draws.reduce((sum, d) => {
 
         {/* SUBSCRIPTION */}
         <button
-  disabled={subscription === "active" && subscriptionPlan === plan}  // ✅ IMPORTANT
-  className={`w-full px-4 py-2 rounded-xl text-white mt-3 transition duration-300 ${
+disabled={
+  subscription === "active" &&
+  subscriptionPlan === selectedPlan
+}
+className={`w-full px-4 py-2 rounded-xl text-white mt-3 transition duration-300 ${
     subscription === "active"
       ? "bg-green-500 cursor-not-allowed"
       : "bg-gradient-to-r from-pink-500 to-purple-500 hover:scale-105 hover:shadow-lg active:scale-95"
@@ -449,14 +451,14 @@ const totalDonated = draws.reduce((sum, d) => {
 >
   {subscription === "active"
     ? "✅ Premium Active"
-    : plan === "monthly"
+    : selectedPlan === "monthly"
       ? "Buy Monthly ₹99 💳"
       : "Buy Yearly ₹999 💳"}
 </button>
 
         {/* PLAN DISPLAY */}
         <p className="text-white text-sm mt-1">
-          Plan: <b>{plan === "monthly" ? "Monthly ₹99" : "Yearly ₹999"}</b>
+          Plan: <b>{selectedPlan === "monthly" ? "Monthly ₹99" : "Yearly ₹999"}</b>
         </p>
 
         {subscriptionEnd && (
