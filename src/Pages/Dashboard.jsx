@@ -399,7 +399,16 @@ const totalDonated = draws.reduce((sum, d) => {
         
         {/* PLAN SELECT */}
         <h3 className="text-white mt-2">Choose Plan 💳</h3>
-        
+        <button
+  className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mt-3"
+  onClick={handlePayment}
+>
+  {subscription === "active"
+    ? "✅ Premium Active"
+    : plan === "monthly"
+      ? "Buy Monthly ₹99 💳"
+      : "Buy Yearly ₹999 💳"}
+</button>
         <select
           className="bg-white/20 text-white p-2 rounded w-full mt-2"
           value={plan}
