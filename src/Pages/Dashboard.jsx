@@ -200,7 +200,6 @@ function Dashboard() {
     currency: "INR",
     name: "Golf Charity App",
     description: "Subscription Payment",
-    image: "https://zjyhtmlzcyipcdcafmqo.supabase.co/storage/v1/object/public/images/logo.png",
     handler: async function (response) {
   console.log("Payment Success:", response);
 
