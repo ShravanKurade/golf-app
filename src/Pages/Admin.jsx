@@ -119,29 +119,6 @@ const undoUser = async (id) => {
   fetchUsers();
   toast.success("Restored ✅");
 };
-const undoDelete = async (toastId) => {
-  if (!lastDeleted) return;
-
-  if (lastDeleted.type === "user") {
-    await supabase.from("profiles").insert([lastDeleted.data]);
-    fetchUsers();
-  }
-
-  if (lastDeleted.type === "charity") {
-    await supabase.from("charities").insert([lastDeleted.data]);
-    fetchCharities();
-  }
-
-  if (lastDeleted.type === "draw") {
-    await supabase.from("draws").insert([lastDeleted.data]);
-    fetchDraws();
-  }
-
-  toast.dismiss(toastId);
-  toast.success("Restored ✅");
-
-  setLastDeleted(null);
-};
   // ================= CHARITY ADD AND DELETE =================
   // ✅ ADD
 const addCharity = async () => {
@@ -667,55 +644,41 @@ const totalPool = activeUsers.length * 99 + jackpot;
 
     <div className="flex gap-2">
 
-      <button
-        onClick={() => toggleRole(u.id, u.role)}
-        className="bg-blue-500 px-2 rounded"
-      >
-        Toggle Role
-      </button>
+  {/* ✅ ONLY ONCE */}
+  <button
+    onClick={() => toggleRole(u.id, u.role)}
+    className="bg-blue-500 px-2 rounded"
+  >
+    Toggle Role
+  </button>
 
-    {!u.is_deleted ? (
-  <>
-    <button
-      onClick={() => toggleRole(u.id, u.role)}
-      className="bg-blue-500 px-2 rounded"
-    >
-      Toggle Role
-    </button>
-
+  {/* 🔥 CONDITIONAL */}
+  {!u.is_deleted ? (
     <button
       onClick={() => deleteUser(u.id)}
       className="bg-red-500 px-2 rounded"
     >
       Delete ❌
     </button>
-  </>
-) : (
-  <>
-    <button
-      onClick={() => deleteUserPermanent(u.id)}
-      className="bg-red-700 px-2 rounded"
-    >
-      Delete Permanently ⚠️
-    </button>
+  ) : (
+    <>
+      <button
+        onClick={() => deleteUserPermanent(u.id)}
+        className="bg-red-700 px-2 rounded"
+      >
+        Delete Permanently ⚠️
+      </button>
 
-    <button
-      onClick={() => toggleRole(u.id, u.role)}
-      className="bg-blue-500 px-2 rounded"
-    >
-      Toggle Role
-    </button>
+      <button
+        onClick={() => undoUser(u.id)}
+        className="bg-green-500 px-2 rounded"
+      >
+        Undo ✅
+      </button>
+    </>
+  )}
 
-    <button
-      onClick={() => undoUser(u.id)}
-      className="bg-green-500 px-2 rounded"
-    >
-      Undo ✅
-    </button>
-  </>
-)}
-
-    </div>
+</div>
   </div>
 ))}
       </motion.div>
