@@ -53,7 +53,7 @@ const deleteDraw = async (drawId) => {
     return;
   }
 
-  toast.success("Only one deleted ✅");
+  toast.success("Draw deleted ✅");
 
   // better than reload
   setDraws((prev) => prev.filter((d) => d.id !== drawId));
