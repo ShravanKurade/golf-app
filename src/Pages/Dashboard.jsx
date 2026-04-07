@@ -105,7 +105,7 @@ function Dashboard() {
         toast.error("Subscription expired ❌");
       } else {
         setSubscription("active");
-        setSubscriptionEnd(end);
+        setSubscriptionEnd(new Date(data.subscription_end));
         setSubscriptionPlan(data?.subscription_plan || "");
       }
     } else {
