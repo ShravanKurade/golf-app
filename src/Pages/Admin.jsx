@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 
 function Admin() {
   const [lastDeletedUser, setLastDeletedUser] = useState(null);
-  const [lastDeleted, setLastDeleted] = useState(null);
   const [editId, setEditId] = useState(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalCharity, setTotalCharity] = useState(0);
@@ -74,20 +73,6 @@ const deleteUser = async (id) => {
   setLastDeletedUser(userToDelete); // 🔥 store last deleted
 
   toast.success("User deleted ❌");
-
-  fetchUsers();
-};
-const undoLastDelete = async () => {
-  if (!lastDeletedUser) return;
-
-  await supabase
-    .from("profiles")
-    .update({ is_deleted: false })
-    .eq("id", lastDeletedUser.id);
-
-  toast.success("Restored ✅");
-
-  setLastDeletedUser(null);
 
   fetchUsers();
 };
@@ -175,9 +160,7 @@ const deleteCharity = async (id) => {
 const fetchUsers = async () => {
   const { data } = await supabase
     .from("profiles")
-    .select("*")
-    .eq("is_deleted", false);
-
+    .select("*");
   setUsers(data || []);
 };
 
