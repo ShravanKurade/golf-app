@@ -4,6 +4,7 @@ import { supabase } from "../supabase";
 import toast from "react-hot-toast";
 
 function Admin() {
+  const [lastDeleted, setLastDeleted] = useState(null);
   const [editId, setEditId] = useState(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalCharity, setTotalCharity] = useState(0);
@@ -60,13 +61,52 @@ const deleteDraw = async (drawId) => {
 };
   // =================DELETE USER =================
 const deleteUser = async (id) => {
-  if (!window.confirm("Delete user?")) return;
+  const userToDelete = users.find(u => u.id === id);
 
   await supabase.from("profiles").delete().eq("id", id);
 
-  toast.success("User deleted ❌");
+  setLastDeleted({
+    type: "user",
+    data: userToDelete
+  });
+
+  toast((t) => (
+    <span>
+      User deleted ❌
+      <button
+        onClick={() => undoDelete(t.id)}
+        className="ml-2 text-blue-400 underline"
+      >
+        Undo
+      </button>
+    </span>
+  ));
+
   fetchUsers();
   fetchUsersCount();
+};
+const undoDelete = async (toastId) => {
+  if (!lastDeleted) return;
+
+  if (lastDeleted.type === "user") {
+    await supabase.from("profiles").insert([lastDeleted.data]);
+    fetchUsers();
+  }
+
+  if (lastDeleted.type === "charity") {
+    await supabase.from("charities").insert([lastDeleted.data]);
+    fetchCharities();
+  }
+
+  if (lastDeleted.type === "draw") {
+    await supabase.from("draws").insert([lastDeleted.data]);
+    fetchDraws();
+  }
+
+  toast.dismiss(toastId);
+  toast.success("Restored ✅");
+
+  setLastDeleted(null);
 };
   // ================= CHARITY ADD AND DELETE =================
   // ✅ ADD
