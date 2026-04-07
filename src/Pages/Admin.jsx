@@ -39,22 +39,24 @@ const toggleRole = async (id, role) => {
 const deleteDraw = async (drawId) => {
   if (!window.confirm("Delete this draw?")) return;
 
-  console.log("Deleting ID:", drawId);
-
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("draws")
     .delete()
-    .eq("id", drawId);
+    .eq("id", drawId)
+    .select();
+
+  console.log("Deleted:", data);
 
   if (error) {
-    console.log(error);
     toast.error("Delete failed ❌");
+    console.log(error);
     return;
   }
 
-  toast.success("Draw deleted ✅");
+  toast.success("Only one deleted ✅");
 
-  window.location.reload();
+  // better than reload
+  setDraws((prev) => prev.filter((d) => d.id !== drawId));
 };
   // =================DELETE USER =================
 const deleteUser = async (id) => {
