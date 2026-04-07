@@ -95,20 +95,24 @@ const deleteDraw = async (drawId) => {
 };
   // =================DELETE USER =================
 const deleteUser = async (id) => {
-  if (!window.confirm("Delete user?")) return;
+  if (!window.confirm("Delete user permanently? ⚠️")) return;
 
-  const userToDelete = users.find(u => u.id === id);
+  try {
+    await fetch("/api/deleteUser", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId: id }),
+    });
 
-  await supabase
-    .from("profiles")
-    .update({ is_deleted: true })
-    .eq("id", id);
+    toast.success("User deleted completely ✅");
 
-  setLastDeletedUser(userToDelete); // 🔥 store last deleted
-
-  toast.success("User deleted ❌");
-
-  fetchUsers();
+    fetchUsers(); // refresh list
+  } catch (err) {
+    toast.error("Delete failed ❌");
+    console.log(err);
+  }
 };
 const undoUser = async (id) => {
   await supabase
