@@ -23,6 +23,26 @@ function Admin() {
   const [loading, setLoading] = useState(true);
 
   
+  const deleteUserPermanent = async (id) => {
+  const confirmDelete = window.confirm("Permanent delete? ⚠️ This cannot be undone");
+
+  if (!confirmDelete) return;
+
+  const { error } = await supabase
+    .from("profiles")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    toast.error("Failed ❌");
+    console.log(error);
+    return;
+  }
+
+  fetchUsers();
+  toast.success("Deleted permanently 💀");
+};
+
   const undoLastDelete = async () => {
   if (!lastDeletedUser) return;
 
@@ -631,14 +651,7 @@ const totalPool = activeUsers.length * 99 + jackpot;
 
   <h2 className="text-white text-xl">User Management</h2>
 
-  {lastDeletedUser && (
-    <button
-      onClick={undoLastDelete}
-      className="bg-green-500 px-4 py-2 rounded text-white"
-    >
-      Undo ↩️
-    </button>
-  )}
+
 
 </div>
 
@@ -662,19 +675,44 @@ const totalPool = activeUsers.length * 99 + jackpot;
       </button>
 
     {!u.is_deleted ? (
-  <button
-    onClick={() => deleteUser(u.id)}
-    className="bg-red-500 px-2 rounded"
-  >
-    Delete ❌
-  </button>
+  <>
+    <button
+      onClick={() => toggleRole(u.id, u.role)}
+      className="bg-blue-500 px-2 rounded"
+    >
+      Toggle Role
+    </button>
+
+    <button
+      onClick={() => deleteUser(u.id)}
+      className="bg-red-500 px-2 rounded"
+    >
+      Delete ❌
+    </button>
+  </>
 ) : (
-  <button
-    onClick={() => undoUser(u.id)}
-    className="bg-green-500 px-2 rounded"
-  >
-    Undo ✅
-  </button>
+  <>
+    <button
+      onClick={() => deleteUserPermanent(u.id)}
+      className="bg-red-700 px-2 rounded"
+    >
+      Delete Permanently ⚠️
+    </button>
+
+    <button
+      onClick={() => toggleRole(u.id, u.role)}
+      className="bg-blue-500 px-2 rounded"
+    >
+      Toggle Role
+    </button>
+
+    <button
+      onClick={() => undoUser(u.id)}
+      className="bg-green-500 px-2 rounded"
+    >
+      Undo ✅
+    </button>
+  </>
 )}
 
     </div>
