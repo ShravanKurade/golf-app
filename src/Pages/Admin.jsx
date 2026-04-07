@@ -36,6 +36,26 @@ const toggleRole = async (id, role) => {
   fetchUsers();
 };
 
+const deleteDraw = async (drawId) => {
+  if (!window.confirm("Delete this draw?")) return;
+
+  console.log("Deleting ID:", drawId);
+
+  const { error } = await supabase
+    .from("draws")
+    .delete()
+    .eq("id", drawId);
+
+  if (error) {
+    console.log(error);
+    toast.error("Delete failed ❌");
+    return;
+  }
+
+  toast.success("Draw deleted ✅");
+
+  window.location.reload();
+};
   // =================DELETE USER =================
 const deleteUser = async (id) => {
   if (!window.confirm("Delete user?")) return;
