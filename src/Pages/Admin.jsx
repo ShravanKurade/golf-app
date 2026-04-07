@@ -500,7 +500,7 @@ const totalPool = activeUsers.length * 99 + jackpot;
 
   <button
     className="bg-red-500 px-4 py-2 rounded-lg text-sm"
-    onClick={() => deleteUserData(d.user_id)}
+    onClick={() => deleteUserData(d.id)}
   >
     Delete ❌
   </button>
