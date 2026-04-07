@@ -4,6 +4,7 @@ import { supabase } from "../supabase";
 import toast from "react-hot-toast";
 
 function Admin() {
+  const [lastDeletedUser, setLastDeletedUser] = useState(null);
   const [lastDeleted, setLastDeleted] = useState(null);
   const [editId, setEditId] = useState(null);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -63,15 +64,32 @@ const deleteDraw = async (drawId) => {
 const deleteUser = async (id) => {
   if (!window.confirm("Delete user?")) return;
 
+  const userToDelete = users.find(u => u.id === id);
+
   await supabase
     .from("profiles")
     .update({ is_deleted: true })
     .eq("id", id);
 
-  toast.success("User hidden ❌");
+  setLastDeletedUser(userToDelete); // 🔥 store last deleted
+
+  toast.success("User deleted ❌");
 
   fetchUsers();
-  fetchUsersCount();
+};
+const undoLastDelete = async () => {
+  if (!lastDeletedUser) return;
+
+  await supabase
+    .from("profiles")
+    .update({ is_deleted: false })
+    .eq("id", lastDeletedUser.id);
+
+  toast.success("Restored ✅");
+
+  setLastDeletedUser(null);
+
+  fetchUsers();
 };
 const undoUser = async (id) => {
   await supabase
@@ -611,7 +629,21 @@ const totalPool = activeUsers.length * 99 + jackpot;
     </button>
   </div>
 ))}
-<h2 className="text-white mt-6 text-xl">User Management</h2>
+
+<div className="flex justify-between items-center mt-6">
+
+  <h2 className="text-white text-xl">User Management</h2>
+
+  {lastDeletedUser && (
+    <button
+      onClick={undoLastDelete}
+      className="bg-green-500 px-4 py-2 rounded text-white"
+    >
+      Undo ↩️
+    </button>
+  )}
+
+</div>
 
 {users.map((u) => (
   <div
