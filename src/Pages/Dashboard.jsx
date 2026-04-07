@@ -432,7 +432,7 @@ const totalDonated = draws.reduce((sum, d) => {
           onClick={handlePayment}
         >
           {subscription === "active"
-            ? ""
+            ? "✅ Premium Active"
             : plan === "monthly"
               ? "Buy Monthly ₹99 💳"
               : "Buy Yearly ₹999 💳"}
