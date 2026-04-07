@@ -1,3 +1,4 @@
+import emailjs from "@emailjs/browser";
 import { motion } from "framer-motion";
 import { supabase } from "../supabase";
 import { useState, useEffect } from "react";
@@ -184,7 +185,6 @@ function Dashboard() {
     fetchScores();
     toast.success("Score added ✅");
   };
-
   // ================= PAYMENT =================
   const handlePayment = async () => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -201,29 +201,50 @@ function Dashboard() {
     description: "Subscription Payment",
 
     handler: async function (response) {
-      console.log("Payment Success:", response);
+  console.log("Payment Success:", response);
 
-      const start = new Date();
-      let end = new Date();
+  const start = new Date();
+  let end = new Date();
 
-      if (plan === "monthly") {
-        end.setDate(start.getDate() + 30);
-      } else {
-        end.setFullYear(start.getFullYear() + 1);
-      }
+  if (plan === "monthly") {
+    end.setDate(start.getDate() + 30);
+  } else {
+    end.setFullYear(start.getFullYear() + 1);
+  }
 
-      await supabase
-        .from("profiles")
-        .update({
-          subscription_status: "active",
-          subscription_start: start,
-          subscription_end: end,
-          subscription_plan: plan,
-        })
-        .eq("id", user.id);
+  await supabase
+    .from("profiles")
+    .update({
+      subscription_status: "active",
+      subscription_start: start,
+      subscription_end: end,
+      subscription_plan: plan,
+    })
+    .eq("id", user.id);
 
-      toast.success("Payment successful 💳");
-    },
+  // ✅ EMAIL SEND CODE
+  const templateParams = {
+    to_email: user.email,
+    plan: plan,
+    end_date: end.toLocaleDateString(),
+  };
+
+  emailjs
+    .send(
+      "service_ml289oq",     // ✅ tera service id
+      "template_ir3thgf",    // ✅ tera template id
+      templateParams,
+      "2IXvdxDXKTdfIlsoF"    // ✅ tera public key
+    )
+    .then(() => {
+      console.log("Email sent ✅");
+    })
+    .catch((err) => {
+      console.log("Email error ❌", err);
+    });
+
+  toast.success("Payment successful 💳 + Email sent 📩");
+},
 
     prefill: {
       email: user.email,
@@ -241,7 +262,7 @@ function Dashboard() {
   // ================= DRAW =================
   // 📸 UPLOAD PROOF
 const uploadProof = async (drawId) => {
-  const file = files[drawId];
+  const file = proofFile;
 
   if (!file) return toast.error("Select file");
 
