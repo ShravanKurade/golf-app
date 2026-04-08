@@ -17,6 +17,8 @@ export default async function handler(req, res) {
   }
 
   try {
+
+    console.log("USER ID:",userId);
     // 🔥 DELETE RELATED DATA FIRST
     await supabase.from("draws").delete().eq("user_id", userId);
     await supabase.from("scores").delete().eq("user_id", userId);
