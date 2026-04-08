@@ -282,8 +282,10 @@ const options = {
   .eq("id", user.id);
 
 if (error) {
-  console.log("DB ERROR:", error);
-  return toast.error("DB update failed ❌");
+  console.log("UPDATE ERROR:", error);
+  toast.error("DB update failed ❌");
+} else {
+  console.log("UPDATE SUCCESS ✅");
 }
 
     // ✅ EMAIL SEND
@@ -298,9 +300,7 @@ if (error) {
       import.meta.env.VITE_EMAILJS_PUBLIC_KEY
     );
 
-    // ✅ UI UPDATE
-    setSubscription("active");
-    setSubscriptionEnd(end);
+    await fetchProfile(); // 🔥 always DB se sync
 
     toast.success("Payment successful 💳 + Email sent 📩");
   },
