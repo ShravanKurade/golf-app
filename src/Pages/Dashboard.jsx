@@ -424,7 +424,7 @@ const playSound = () => {
 
     toast.success("Draw Completed 🎉");
 
-  }, 3000); // ⏱️ 3 sec
+  }, 2500); // ⏱️ 2.5 sec
 };
 const totalWinnings = draws.reduce((sum, d) => {
   const match = d.result?.match(/₹(\d+)/);
