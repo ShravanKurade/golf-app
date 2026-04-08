@@ -256,13 +256,10 @@ const options = {
   handler: async function (response) {
 
   const { data: { user } } = await supabase.auth.getUser();
-  console.log("USER:", user);
 
   if (!user) {
     return toast.error("User not found ❌");
   }
-
-  console.log("Payment Success:", response);
 
   const start = new Date();
   let end = new Date();
@@ -281,8 +278,7 @@ const options = {
     .update({
       subscription_status: "active",
       subscription_plan: selectedPlan,
-      subscription_amount: amount,
-      subscription_end: end.toISOString()   // 🔥 IMPORTANT FIX
+      subscription_end: end.toISOString()
     })
     .eq("id", user.id);
 
@@ -291,11 +287,22 @@ const options = {
     return toast.error("DB update failed ❌");
   }
 
-  // 🔥 REFRESH UI
+  // 🔥 EMAIL SEND
+  await emailjs.send(
+    import.meta.env.VITE_EMAILJS_SERVICE_ID,
+    import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+    {
+      user_email: user.email,
+      valid_till: validTill,
+      plan_amount: amount
+    },
+    import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+  );
+
   await fetchProfile();
 
-  toast.success("Payment successful 💳");
-},
+  toast.success("Payment successful 💳 + Email sent 📩");
+},  
 
   prefill: {
   email: user.email,
