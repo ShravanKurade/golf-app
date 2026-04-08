@@ -591,6 +591,9 @@ const totalDonated = draws.reduce((sum, d) => {
             </li>
           ))}
         </ul>
+        <p className="text-white mt-3 font-bold">
+  🎯 Your: {scores.map((s) => s.score).join(", ")}
+</p>
 
         {/* DRAW */}
         <button
