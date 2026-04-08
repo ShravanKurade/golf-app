@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import confetti from "canvas-confetti";
 import emailjs from "@emailjs/browser";
 import { motion } from "framer-motion";
@@ -29,142 +30,198 @@ function Dashboard() {
   const [displayNumbers, setDisplayNumbers] = useState([]);
 
   const [isJackpot, setIsJackpot] = useState(false);
-  
+
+  const [bgAudio] = useState(new Audio("/bg.mp3"));
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+
+
+  const spinAudioRef = useRef(new Audio("/spin.mp3"));
+  spinAudioRef.current.loop = true;
+
+  const playSpin = () => {
+    const audio = spinAudioRef.current;
+    audio.currentTime = 0;
+    audio.play();
+  };
+
+  const stopSpin = () => {
+    const audio = spinAudioRef.current;
+    audio.pause();
+    audio.currentTime = 0;
+  };
+
+  const playWin = () => {
+    const audio = new Audio("/win.mp3");
+    audio.volume = 0.5;
+    audio.play();
+  };
+
+  const playLose = () => {
+    const audio = new Audio("/lose.mp3");
+    audio.volume = 0.5;
+    audio.play();
+  };
   // ================= FETCH =================
 
   // 🔥 COMMON USER GET (reuse everywhere)
-const getUser = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
-};
+  const getUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user;
+  };
 
-// ================= USER DRAWS =================
-const fetchUserDraws = async () => {
-  const user = await getUser();
-  if (!user) return;
+  // ================= USER DRAWS =================
+  const fetchUserDraws = async () => {
+    const user = await getUser();
+    if (!user) return;
 
-  const { data, error } = await supabase
-    .from("draws")
-    .select("*")
-    .eq("user_id", user.id);
+    const { data, error } = await supabase
+      .from("draws")
+      .select("*")
+      .eq("user_id", user.id);
 
-  if (error) {
-    console.log("Draws Error:", error);
-    return;
-  }
-
-  setDraws(data || []);
-};
-
-// ================= SCORES =================
-const fetchScores = async () => {
-  const user = await getUser();
-  if (!user) return;
-
-  const { data, error } = await supabase
-    .from("scores")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("id", { ascending: false })
-    .limit(5);
-
-  if (error) {
-    console.log("Scores Error:", error);
-    return;
-  }
-
-  setScores(data || []);
-};
-
-// ================= HISTORY =================
-const fetchHistory = async () => {
-  const user = await getUser();
-  if (!user) return;
-
-  const { data, error } = await supabase
-    .from("draws")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("id", { ascending: false })
-    .limit(5);
-
-  if (error) {
-    console.log("History Error:", error);
-    return;
-  }
-
-  setHistory(data || []);
-};
-
-// ================= LATEST DRAW =================
-const fetchLatestDraw = async () => {
-  const { data, error } = await supabase
-    .from("draws")
-    .select("*")
-    .order("id", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    console.log("Latest Draw Error:", error);
-    return;
-  }
-
-  setLatestDraw(data);
-};
-
-// ================= PROFILE =================
-const fetchProfile = async () => {
-  const user = await getUser();
-  if (!user) return;
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("subscription_status, subscription_end, subscription_plan")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error) {
-    console.log("Profile Error:", error);
-    return;
-  }
-
-  if (!data) {
-    setSubscription("inactive");
-    return;
-  }
-
-  // 🔥 DATE CHECK
-  if (data.subscription_end) {
-    const now = new Date();
-    const end = new Date(data.subscription_end);
-
-    if (now > end) {
-      setSubscription("inactive");
-
-      await supabase
-        .from("profiles")
-        .update({ subscription_status: "inactive" })
-        .eq("id", user.id);
-
-      toast.error("Subscription expired ❌");
-    } else {
-      setSubscription("active");
-      setSubscriptionEnd(end);
-      setSubscriptionPlan(data.subscription_plan || "");
+    if (error) {
+      console.log("Draws Error:", error);
+      return;
     }
-  } else {
-    setSubscription("inactive");
-  }
-};
+
+    setDraws(data || []);
+  };
+
+  // ================= SCORES =================
+  const fetchScores = async () => {
+    const user = await getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("scores")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("id", { ascending: false })
+      .limit(5);
+
+    if (error) {
+      console.log("Scores Error:", error);
+      return;
+    }
+
+    setScores(data || []);
+  };
+
+  // ================= HISTORY =================
+  const fetchHistory = async () => {
+    const user = await getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("draws")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("id", { ascending: false })
+      .limit(5);
+
+    if (error) {
+      console.log("History Error:", error);
+      return;
+    }
+
+    setHistory(data || []);
+  };
+
+  // ================= LATEST DRAW =================
+  const fetchLatestDraw = async () => {
+    const { data, error } = await supabase
+      .from("draws")
+      .select("*")
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.log("Latest Draw Error:", error);
+      return;
+    }
+
+    setLatestDraw(data);
+  };
+
+  // ================= PROFILE =================
+  const fetchProfile = async () => {
+    const user = await getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("subscription_status, subscription_end, subscription_plan")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.log("Profile Error:", error);
+      return;
+    }
+
+    if (!data) {
+      setSubscription("inactive");
+      return;
+    }
+
+    // 🔥 DATE CHECK
+    if (data.subscription_end) {
+      const now = new Date();
+      const end = new Date(data.subscription_end);
+
+      if (now > end) {
+        setSubscription("inactive");
+
+        await supabase
+          .from("profiles")
+          .update({ subscription_status: "inactive" })
+          .eq("id", user.id);
+
+        toast.error("Subscription expired ❌");
+      } else {
+        setSubscription("active");
+        setSubscriptionEnd(end);
+        setSubscriptionPlan(data.subscription_plan || "");
+      }
+    } else {
+      setSubscription("inactive");
+    }
+  };
 
   const fetchCharities = async () => {
     const { data } = await supabase.from("charities").select("*");
     setCharities(data || []);
   };
 
-  useEffect(() => {
 
+  useEffect(() => {
+    bgAudio.loop = true;
+    bgAudio.volume = 0.3;
+
+    // try autoplay
+    bgAudio.play().then(() => {
+      setIsMusicPlaying(true);
+    }).catch(() => {
+      console.log("Autoplay blocked 😢");
+    });
+
+    // fallback → first click pe chalega
+    const startMusicOnClick = () => {
+      bgAudio.play();
+      setIsMusicPlaying(true);
+      window.removeEventListener("click", startMusicOnClick);
+    };
+
+    window.addEventListener("click", startMusicOnClick);
+
+    return () => {
+      window.removeEventListener("click", startMusicOnClick);
+
+      bgAudio.pause();
+      bgAudio.currentTime = 0;
+    };
+  }, []);
   // ⏳ TIMER
   const interval = setInterval(() => {
     const nextDraw = new Date();
@@ -189,7 +246,7 @@ const fetchProfile = async () => {
       fetchHistory();
       fetchProfile(); // ✅ FIRST CALL
       fetchLatestDraw();
-      fetchCharities();  
+      fetchCharities();
       fetchUserDraws();
     }
   };
@@ -205,123 +262,121 @@ const fetchProfile = async () => {
     clearInterval(interval);
     clearInterval(profileInterval); // ✅ cleanup
   };
+// ================= ADD SCORE =================
+const addScore = async () => {
+  if (subscription !== "active") {
+    return toast.error("Buy Premium first 💳");
+  }
 
-}, []);
+  if (!input || input < 1 || input > 45) {
+    return toast.error("Score must be 1–45 ❌");
+  }
 
-  // ================= ADD SCORE =================
-  const addScore = async () => {
-    if (subscription !== "active") {
-      return toast.error("Buy Premium first 💳");
-    }
+  const { data: { user } } = await supabase.auth.getUser();
 
-    if (!input || input < 1 || input > 45) {
-      return toast.error("Score must be 1–45 ❌");
-    }
+  const { data: oldScores } = await supabase
+    .from("scores")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("id", { ascending: true });
 
-    const { data: { user } } = await supabase.auth.getUser();
+  if (oldScores && oldScores.length >= 5) {
+    await supabase.from("scores").delete().eq("id", oldScores[0].id);
+  }
 
-    const { data: oldScores } = await supabase
-      .from("scores")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("id", { ascending: true });
+  await supabase.from("scores").insert([
+    {
+      user_id: user.id,
+      score: Number(input),
+      date: new Date().toLocaleDateString(),
+    },
+  ]);
 
-    if (oldScores && oldScores.length >= 5) {
-      await supabase.from("scores").delete().eq("id", oldScores[0].id);
-    }
-
-    await supabase.from("scores").insert([
-      {
-        user_id: user.id,
-        score: Number(input),
-        date: new Date().toLocaleDateString(),
-      },
-    ]);
-
-    setInput("");
-    fetchScores();
-    toast.success("Score added ✅");
-  };
-  // ================= PAYMENT =================
-  const handlePayment = async () => {
+  setInput("");
+  fetchScores();
+  toast.success("Score added ✅");
+};
+// ================= PAYMENT =================
+const handlePayment = async () => {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return;
 
   const amount = selectedPlan === "monthly" ? 99 : 999;
 
-const options = {
-  key: import.meta.env.VITE_RAZORPAY_KEY,
-  amount: amount * 100,   // 🔥 Razorpay paisa paise me leta hai
-  currency: "INR",
-  name: "Golf Charity App",
-  description: "Subscription Payment",
+  const options = {
+    key: import.meta.env.VITE_RAZORPAY_KEY,
+    amount: amount * 100,   // 🔥 Razorpay paisa paise me leta hai
+    currency: "INR",
+    name: "Golf Charity App",
+    description: "Subscription Payment",
 
-  handler: async function (response) {
+    handler: async function (response) {
 
-  const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    return toast.error("User not found ❌");
-  }
+      if (!user) {
+        return toast.error("User not found ❌");
+      }
 
-  const start = new Date();
-  let end = new Date();
+      const start = new Date();
+      let end = new Date();
 
-  if (selectedPlan === "monthly") {
-    end.setDate(start.getDate() + 30);
-  } else {
-    end.setFullYear(start.getFullYear() + 1);
-  }
+      if (selectedPlan === "monthly") {
+        end.setDate(start.getDate() + 30);
+      } else {
+        end.setFullYear(start.getFullYear() + 1);
+      }
 
-  const validTill = end.toLocaleDateString();
+      const validTill = end.toLocaleDateString();
 
-  // 🔥 DB UPDATE
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      subscription_status: "active",
-      subscription_plan: selectedPlan,
-      subscription_end: end.toISOString()
-    })
-    .eq("id", user.id);
+      // 🔥 DB UPDATE
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          subscription_status: "active",
+          subscription_plan: selectedPlan,
+          subscription_end: end.toISOString()
+        })
+        .eq("id", user.id);
 
-  if (error) {
-    console.log("UPDATE ERROR:", error);
-    return toast.error("DB update failed ❌");
-  }
+      if (error) {
+        console.log("UPDATE ERROR:", error);
+        return toast.error("DB update failed ❌");
+      }
 
-  // 🔥 EMAIL SEND
-  await emailjs.send(
-    import.meta.env.VITE_EMAILJS_SERVICE_ID,
-    import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-    {
-      user_email: user.email,
-      valid_till: validTill,
-      plan_amount: amount
+      // 🔥 EMAIL SEND
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        {
+          user_email: user.email,
+          valid_till: validTill,
+          plan_amount: amount
+        },
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+
+      await fetchProfile();
+
+      toast.success("Payment successful 💳 + Email sent 📩");
     },
-    import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-  );
 
-  await fetchProfile();
+    prefill: {
+      email: user.email,
+    },
 
-  toast.success("Payment successful 💳 + Email sent 📩");
-},  
+    theme: {
+      color: "#9333ea",
+    },
+  };
 
-  prefill: {
-  email: user.email,
-},
-
-  theme: {
-    color: "#9333ea",
-  },
+  const rzp = new window.Razorpay(options);
+  rzp.open();
 };
 
-const rzp = new window.Razorpay(options);
-rzp.open();};
-
-  // ================= DRAW =================
-  // 📸 UPLOAD PROOF
+// ================= DRAW =================
+// 📸 UPLOAD PROOF
 const uploadProof = async (drawId) => {
   const file = proofFile;
 
@@ -348,14 +403,7 @@ const uploadProof = async (drawId) => {
   toast.success("Proof uploaded ✅");
   fetchHistory();
 };
-const playSpin = () => {
-  const audio = new Audio("/spin.mp3");
-  audio.loop = true; // 🔥 continuous
-  audio.volume = 0.5;
-  audio.play();
-  return audio;
-};
-  const runDraw = async () => {
+const runDraw = async () => {
   if (subscription !== "active")
     return toast.error("Buy Premium first");
 
@@ -368,10 +416,13 @@ const playSpin = () => {
   if (charityPercent < 10)
     return toast.error("Minimum charity 10%");
 
+  setDisplayNumbers([]); // reset
   setSpinning(true);
-  setDisplayNumbers([]);
-const spinAudio = playSpin();
-  // 🔥 SPIN START
+
+  playSpin(); // 🔊 start spin sound
+  bgAudio.volume = 0.1; // 🔥 ADD HERE
+
+  // 🎰 SPIN EFFECT
   const spinInterval = setInterval(() => {
     const temp = Array.from({ length: 5 }, () =>
       Math.floor(Math.random() * 45) + 1
@@ -381,8 +432,8 @@ const spinAudio = playSpin();
 
   setTimeout(async () => {
     clearInterval(spinInterval);
-    
-
+    stopSpin(); // 🔇 stop spin sound
+    bgAudio.volume = 0.3; // 🔥 ADD HERE
     // 🎯 FINAL NUMBERS
     const drawNumbers = Array.from({ length: 5 }, () =>
       Math.floor(Math.random() * 45) + 1
@@ -390,8 +441,7 @@ const spinAudio = playSpin();
 
     setDisplayNumbers(drawNumbers);
     setSpinning(false);
-spinAudio.pause();
-spinAudio.currentTime = 0;
+
     const userNumbers = scores.map((s) => s.score);
 
     let matchCount = userNumbers.filter((n) =>
@@ -405,15 +455,37 @@ spinAudio.currentTime = 0;
       message = "🥇 Jackpot";
       prize = `₹4000`;
       setIsJackpot(true);
+      playWin();
+
+      document.body.classList.add("animate-shake");
+
+      setTimeout(() => {
+        document.body.classList.remove("animate-shake");
+      }, 500);
+
     } else if (matchCount === 4) {
       message = "🥈 4 Matches";
       prize = `₹3500`;
+      playWin();
+
     } else if (matchCount === 3) {
       message = "🥉 3 Matches";
       prize = `₹2500`;
+      playWin();
+
     } else {
       message = "😢 No Win";
       prize = "₹0";
+      playLose();
+    }
+
+    // 🎉 CONFETTI
+    if (matchCount >= 3) {
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
     }
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -429,21 +501,13 @@ spinAudio.currentTime = 0;
 
     fetchHistory();
     fetchLatestDraw();
-// 🎉 CONFETTI
-if (matchCount >= 3) {
-  confetti({
-    particleCount: 150,
-    spread: 70,
-    origin: { y: 0.6 },
-  });
-  if (matchCount >= 3) {
-new Audio("/win.mp3").play();
-}
-}
+
     toast.success("Draw Completed 🎉");
-setTimeout(() => setIsJackpot(false), 4000);
+
+    // 💰 RESET JACKPOT
+    setTimeout(() => setIsJackpot(false), 4000);
+
   }, 2500);
-  
 };
 const totalWinnings = draws.reduce((sum, d) => {
   const match = d.result?.match(/₹(\d+)/);
@@ -455,239 +519,254 @@ const totalDonated = draws.reduce((sum, d) => {
   const match = d.result?.match(/\((\d+)%\)/);
   return sum + (match ? Number(match[1]) : 0);
 }, 0);
-  // ================= UI =================
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
+// ================= UI =================
+return (
+  <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6 relative">
 
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto bg-white/20 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20"
-      >
-
-        <h1 className="text-3xl font-bold text-white text-center">
-          🎯 Your Golf Dashboard
-        </h1>
-        <p className="text-white text-center mt-2">
-  ⏳ Next Draw: {timeLeft}
-</p>
-        <p className="text-white text-center mt-2 mb-4 text-sm opacity-90">
-            Play Golf. Win Rewards. Change Lives ❤️
-        </p>
-        <h2 className="text-white text-xl mt-4 text-center">
-  💰 Total Winnings: ₹{totalWinnings}
-</h2>
-<h2 className="text-white text-lg text-center">
-  ❤️ Total Donated: {totalDonated}%
-</h2>
-<h2 className="text-white mt-6 text-xl text-center">
-  Your Draw History
-</h2>
-
-{history.map((d) => (
-  <div
-    key={d.id}
-    className="bg-white/20 p-3 mt-2 text-white rounded"
-  >
-    🎯 Numbers: {d.numbers} <br />
-
-    Result: {d.result || "Pending"}
-
-    {/* 🏆 WINNER BADGE */}
-    {d.result?.includes("Jackpot") && (
-      <span className="text-yellow-300 font-bold ml-2">
-        🏆 Winner
-      </span>
-    )}
-
-    {/* 📸 FILE INPUT */}
-    <input
-      type="file"
-      onChange={(e) => setProofFile(e.target.files[0])}
-      className="mt-2"
-    />
-
-    {/* 📸 UPLOAD BUTTON */}
     <button
-      onClick={() => uploadProof(d.id)}
-      className="bg-blue-500 px-2 py-1 rounded text-white mt-1"
+      onClick={() => {
+        if (isMusicPlaying) {
+          bgAudio.pause();
+          bgAudio.currentTime = 0;
+          setIsMusicPlaying(false);
+        } else {
+          bgAudio.play();
+          setIsMusicPlaying(true);
+        }
+      }}
+      className="absolute top-4 right-4 bg-black/40 text-white px-3 py-1 rounded-full border border-white/20 hover:scale-110 transition"
     >
-      Upload Proof 📸
+      {isMusicPlaying ? "🔊 ON" : "🔇 OFF"}
     </button>
-  </div>
-))}
-        
-        {/* PLAN SELECT */}
-        <h3 className="text-white mt-2">Choose Plan 💳</h3>
-        
-        <select
-          className="bg-white/20 text-white p-2 rounded w-full mt-2"
-          value={selectedPlan}
-          onChange={(e) =>
-          setSelectedPlan(e.target.value)}
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="max-w-2xl mx-auto bg-white/20 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20"
+    >
+
+      <h1 className="text-3xl font-bold text-white text-center">
+        🎯 Your Golf Dashboard
+      </h1>
+      <p className="text-white text-center mt-2">
+        ⏳ Next Draw: {timeLeft}
+      </p>
+      <p className="text-white text-center mt-2 mb-4 text-sm opacity-90">
+        Play Golf. Win Rewards. Change Lives ❤️
+      </p>
+      <h2 className="text-white text-xl mt-4 text-center">
+        💰 Total Winnings: ₹{totalWinnings}
+      </h2>
+      <h2 className="text-white text-lg text-center">
+        ❤️ Total Donated: {totalDonated}%
+      </h2>
+      <h2 className="text-white mt-6 text-xl text-center">
+        Your Draw History
+      </h2>
+
+      {history.map((d) => (
+        <div
+          key={d.id}
+          className="bg-white/20 p-3 mt-2 text-white rounded"
         >
-          <option value="monthly" className="text-black">
-            Monthly ₹99
-          </option>
-          <option value="yearly" className="text-black">
-            Yearly ₹999 (Save 🔥)
-          </option>
-        </select>
+          🎯 Numbers: {d.numbers} <br />
 
-        {/* SUBSCRIPTION */}
-        <button
-  className="w-full px-4 py-2 rounded-xl text-white mt-3 transition duration-300
-  bg-gradient-to-r from-pink-500 to-purple-500 hover:scale-105"
-  onClick={handlePayment}
->
-  {subscription === "active" ? (
-    subscriptionPlan === "monthly" && selectedPlan === "yearly" ? (
-      "🚀 Upgrade to Yearly ₹999"
-    ) : subscriptionPlan === "yearly" ? (
-      "✅ Yearly Active"
-    ) : (
-      "✅ Monthly Active"
-    )
-  ) : selectedPlan === "monthly" ? (
-    "Buy Monthly ₹99 💳"
-  ) : (
-    "Buy Yearly ₹999 💳"
-  )}
-</button>
+          Result: {d.result || "Pending"}
 
-        {/* PLAN DISPLAY */}
-        <p className="text-white text-sm mt-1">
-          Plan: <b>{selectedPlan === "monthly" ? "Monthly ₹99" : "Yearly ₹999"}</b>
-        </p>
+          {/* 🏆 WINNER BADGE */}
+          {d.result?.includes("Jackpot") && (
+            <span className="text-yellow-300 font-bold ml-2">
+              🏆 Winner
+            </span>
+          )}
 
-        {subscriptionEnd && (
-          <p className="text-white text-sm">
-            Valid till: {subscriptionEnd.toLocaleDateString()}
-          </p>
-        )}
-
-        {/* LATEST DRAW */}
-        <h3 className="text-white mt-4">🎯 Latest Draw</h3>
-
-        {latestDraw ? (
-          <div className="bg-white/30 p-3 rounded text-white mt-2">
-            <p><b>Numbers:</b> {latestDraw.numbers}</p>
-            <p><b>Result:</b> {latestDraw.result}</p>
-          </div>
-        ) : (
-          <p className="text-white text-sm mt-2">No draw yet</p>
-        )}
-      <div className="flex justify-center mt-3 mb-3">
-  <button
-    onClick={() => navigate("/charities")}
-    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow hover:scale-105 hover:shadow-lg transition duration-300"
->
-    View Charities ❤️
-  </button>
-</div>
-        {/* CHARITY */}
-        <h3 className="text-white mt-4">Select Charity ❤️</h3>
-
-        <select
-          className="bg-white/30 text-white p-2 rounded w-full"
-          value={selectedCharity}
-          onChange={(e) => setSelectedCharity(e.target.value)}
-        >
-          <option value="" className="text-black">Choose charity</option>
-          {charities.map((c) => (
-            <option key={c.id} value={c.name} className="text-black">
-              {c.name}
-            </option>
-          ))}
-        </select>
-
-        <input
-          type="number"
-          className="bg-white/30 text-white p-2 rounded w-full mt-2"
-          value={charityPercent}
-          onChange={(e) => setCharityPercent(e.target.value)}
-        />
-
-        {/* ADD SCORE */}
-        <h3 className="text-white mt-4">Add Score(1-45)</h3>
-
-        <div className="flex gap-2">
+          {/* 📸 FILE INPUT */}
           <input
-            type="number"
-            className="bg-white/30 text-white p-2 rounded w-full"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+            type="file"
+            onChange={(e) => setProofFile(e.target.files[0])}
+            className="mt-2"
           />
 
-          <button className="bg-purple-500 px-4 rounded text-white hover:bg-purple-600 hover:scale-105 transition duration-300"
-  onClick={addScore}>
-            Add
+          {/* 📸 UPLOAD BUTTON */}
+          <button
+            onClick={() => uploadProof(d.id)}
+            className="bg-blue-500 px-2 py-1 rounded text-white mt-1"
+          >
+            Upload Proof 📸
           </button>
         </div>
+      ))}
 
-        {/* SCORES */}
-        <ul className="mt-4 space-y-2">
-          {scores.map((s) => (
-            <li key={s.id} className="bg-white/30 p-2 rounded text-white">
-              🎯 {s.score} | 📅 {s.date}
-            </li>
-          ))}
-        </ul>
-        <p className="text-white mt-3 font-bold">
-  🎯 Your: {scores.map((s) => s.score).join(", ")}
-</p>
+      {/* PLAN SELECT */}
+      <h3 className="text-white mt-2">Choose Plan 💳</h3>
 
-        {/* DRAW */}
+      <select
+        className="bg-white/20 text-white p-2 rounded w-full mt-2"
+        value={selectedPlan}
+        onChange={(e) =>
+          setSelectedPlan(e.target.value)}
+      >
+        <option value="monthly" className="text-black">
+          Monthly ₹99
+        </option>
+        <option value="yearly" className="text-black">
+          Yearly ₹999 (Save 🔥)
+        </option>
+      </select>
+
+      {/* SUBSCRIPTION */}
+      <button
+        className="w-full px-4 py-2 rounded-xl text-white mt-3 transition duration-300
+  bg-gradient-to-r from-pink-500 to-purple-500 hover:scale-105"
+        onClick={handlePayment}
+      >
+        {subscription === "active" ? (
+          subscriptionPlan === "monthly" && selectedPlan === "yearly" ? (
+            "🚀 Upgrade to Yearly ₹999"
+          ) : subscriptionPlan === "yearly" ? (
+            "✅ Yearly Active"
+          ) : (
+            "✅ Monthly Active"
+          )
+        ) : selectedPlan === "monthly" ? (
+          "Buy Monthly ₹99 💳"
+        ) : (
+          "Buy Yearly ₹999 💳"
+        )}
+      </button>
+
+      {/* PLAN DISPLAY */}
+      <p className="text-white text-sm mt-1">
+        Plan: <b>{selectedPlan === "monthly" ? "Monthly ₹99" : "Yearly ₹999"}</b>
+      </p>
+
+      {subscriptionEnd && (
+        <p className="text-white text-sm">
+          Valid till: {subscriptionEnd.toLocaleDateString()}
+        </p>
+      )}
+
+      {/* LATEST DRAW */}
+      <h3 className="text-white mt-4">🎯 Latest Draw</h3>
+
+      {latestDraw ? (
+        <div className="bg-white/30 p-3 rounded text-white mt-2">
+          <p><b>Numbers:</b> {latestDraw.numbers}</p>
+          <p><b>Result:</b> {latestDraw.result}</p>
+        </div>
+      ) : (
+        <p className="text-white text-sm mt-2">No draw yet</p>
+      )}
+      <div className="flex justify-center mt-3 mb-3">
         <button
-          className="bg-purple-500 w-full py-2 mt-4 rounded text-white hover:bg-purple-600 hover:scale-105 hover:shadow-lg transition duration-300"
-          onClick={runDraw}
+          onClick={() => navigate("/charities")}
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl shadow hover:scale-105 hover:shadow-lg transition duration-300"
         >
-          Enter Draw 🎯
+          View Charities ❤️
         </button>
-        {isJackpot && (
-  <div className="text-center mt-4 animate-bounce">
-    <h1 className="text-4xl font-bold text-yellow-300 drop-shadow-lg">
-      💰 JACKPOT WON 💰
-    </h1>
-  </div>
-)}
-<div className="text-center text-white mt-4">
-  {spinning ? (
-    <h2 className="text-2xl animate-pulse">
-      🎰 {displayNumbers.join(" - ")}
-    </h2>
-  ) : displayNumbers.length > 0 ? (
-    <h2 className="text-xl">
-      🎯 {displayNumbers.join(" - ")}
-    </h2>
-  ) : null}
-</div>
-        {/* HISTORY */}
-        <h3 className="text-white mt-6">📜 History</h3>
+      </div>
+      {/* CHARITY */}
+      <h3 className="text-white mt-4">Select Charity ❤️</h3>
 
-        <ul className="mt-2 space-y-2">
-          {history.map((h) => (
-            <li key={h.id} className="bg-white/30 p-2 rounded text-white">
-              🎯 {h.numbers} | {h.result}
-            </li>
-          ))}
-        </ul>
+      <select
+        className="bg-white/30 text-white p-2 rounded w-full"
+        value={selectedCharity}
+        onChange={(e) => setSelectedCharity(e.target.value)}
+      >
+        <option value="" className="text-black">Choose charity</option>
+        {charities.map((c) => (
+          <option key={c.id} value={c.name} className="text-black">
+            {c.name}
+          </option>
+        ))}
+      </select>
+
+      <input
+        type="number"
+        className="bg-white/30 text-white p-2 rounded w-full mt-2"
+        value={charityPercent}
+        onChange={(e) => setCharityPercent(e.target.value)}
+      />
+
+      {/* ADD SCORE */}
+      <h3 className="text-white mt-4">Add Score(1-45)</h3>
+
+      <div className="flex gap-2">
+        <input
+          type="number"
+          className="bg-white/30 text-white p-2 rounded w-full"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
+
+        <button className="bg-purple-500 px-4 rounded text-white hover:bg-purple-600 hover:scale-105 transition duration-300"
+          onClick={addScore}>
+          Add
+        </button>
+      </div>
+
+      {/* SCORES */}
+      <ul className="mt-4 space-y-2">
+        {scores.map((s) => (
+          <li key={s.id} className="bg-white/30 p-2 rounded text-white">
+            🎯 {s.score} | 📅 {s.date}
+          </li>
+        ))}
+      </ul>
+      <p className="text-white mt-3 font-bold">
+        🎯 Your: {scores.map((s) => s.score).join(", ")}
+      </p>
+
+      {/* DRAW */}
+      <button
+        className="bg-purple-500 w-full py-2 mt-4 rounded text-white hover:bg-purple-600 hover:scale-105 hover:shadow-lg transition duration-300"
+        onClick={runDraw}
+      >
+        Enter Draw 🎯
+      </button>
+      {isJackpot && (
+        <div className="text-center mt-4 animate-bounce">
+          <h1 className="text-4xl font-bold text-yellow-300 drop-shadow-lg">
+            💰 JACKPOT WON 💰
+          </h1>
+        </div>
+      )}
+      <div className="text-center text-white mt-4">
+        {spinning ? (
+          <h2 className="text-3xl font-bold text-yellow-300 animate-pulse drop-shadow-[0_0_20px_gold]">
+            🎰 {displayNumbers.join(" - ")}
+          </h2>
+        ) : displayNumbers.length > 0 ? (
+          <h2 className="text-xl">
+            🎯 {displayNumbers.join(" - ")}
+          </h2>
+        ) : null}
+      </div>
+      {/* HISTORY */}
+      <h3 className="text-white mt-6">📜 History</h3>
+
+      <ul className="mt-2 space-y-2">
+        {history.map((h) => (
+          <li key={h.id} className="bg-white/30 p-2 rounded text-white">
+            🎯 {h.numbers} | {h.result}
+          </li>
+        ))}
+      </ul>
       {/* LOGOUT */}
-<div className="flex justify-center mt-6">
-  <button
-    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mb-3 hover:scale-105 hover:shadow-lg transition duration-300"
-    onClick={async () => {
-      await supabase.auth.signOut();
-      navigate("/login");
-    }}
-  >
-    Logout
-  </button>
-</div>
-      </motion.div>
-    </div>
-  );
+      <div className="flex justify-center mt-6">
+        <button
+          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-xl mb-3 hover:scale-105 hover:shadow-lg transition duration-300"
+          onClick={async () => {
+            await supabase.auth.signOut();
+            navigate("/login");
+          }}
+        >
+          Logout
+        </button>
+      </div>
+    </motion.div>
+  </div>
+);
 }
 
 export default Dashboard;
