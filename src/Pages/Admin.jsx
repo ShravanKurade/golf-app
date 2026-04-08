@@ -96,6 +96,7 @@ const deleteUserPermanent = async (id) => {
   if (!window.confirm("Permanent delete? ⚠️")) return;
 
   try {
+    // 🔥 1. DELETE FROM AUTH (backend API)
     await fetch("/api/deleteUser", {
       method: "POST",
       headers: {
@@ -104,11 +105,21 @@ const deleteUserPermanent = async (id) => {
       body: JSON.stringify({ userId: id }),
     });
 
+    // 🔥 2. DELETE FROM PROFILES TABLE (IMPORTANT)
+    await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", id);
+
     toast.success("Deleted permanently 💀");
+
+    // 🔥 3. REFRESH BOTH LISTS
     fetchUsers();
     fetchDeletedUsers();
+
   } catch (err) {
     toast.error("Delete failed ❌");
+    console.log(err);
   }
 };
 const undoUser = async (id) => {
