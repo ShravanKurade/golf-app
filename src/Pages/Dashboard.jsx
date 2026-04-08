@@ -487,22 +487,23 @@ const totalDonated = draws.reduce((sum, d) => {
 
         {/* SUBSCRIPTION */}
         <button
-disabled={
-  subscription === "active" &&
-  subscriptionPlan === selectedPlan
-}
-className={`w-full px-4 py-2 rounded-xl text-white mt-3 transition duration-300 ${
-    subscription === "active"
-      ? "bg-green-500 cursor-not-allowed"
-      : "bg-gradient-to-r from-pink-500 to-purple-500 hover:scale-105 hover:shadow-lg active:scale-95"
-  }`}
+  className="w-full px-4 py-2 rounded-xl text-white mt-3 transition duration-300
+  bg-gradient-to-r from-pink-500 to-purple-500 hover:scale-105"
   onClick={handlePayment}
 >
-  {subscription === "active"
-    ? "✅ Premium Active"
-    : selectedPlan === "monthly"
-      ? "Buy Monthly ₹99 💳"
-      : "Buy Yearly ₹999 💳"}
+  {subscription === "active" ? (
+    subscriptionPlan === "monthly" && selectedPlan === "yearly" ? (
+      "🚀 Upgrade to Yearly ₹999"
+    ) : subscriptionPlan === "yearly" ? (
+      "✅ Yearly Active"
+    ) : (
+      "✅ Monthly Active"
+    )
+  ) : selectedPlan === "monthly" ? (
+    "Buy Monthly ₹99 💳"
+  ) : (
+    "Buy Yearly ₹999 💳"
+  )}
 </button>
 
         {/* PLAN DISPLAY */}
