@@ -118,6 +118,7 @@ const undoUser = async (id) => {
     .eq("id", id);
 
   fetchUsers();
+  fetchDeletedUsers();
   toast.success("Restored ✅");
 };
   // ================= CHARITY ADD AND DELETE =================
@@ -692,11 +693,11 @@ const totalPool = activeUsers.length * 99 + jackpot;
   </div>
 ))}
 
-<div className="flex justify-between items-center mt-6">
+  {/* 🔥 MAIN HEADING */}
+<h2 className="text-white text-xl mt-6">User Management</h2>
 
-  <h2 className="text-white text-xl">User Management</h2>
-
-<h2 className="text-white mt-6 text-xl">👤 Active Users</h2>
+{/* 🔥 ACTIVE USERS */}
+<h3 className="text-white mt-4 text-lg">👤 Active Users</h3>
 
 {users.map((u) => (
   <div
@@ -726,10 +727,8 @@ const totalPool = activeUsers.length * 99 + jackpot;
   </div>
 ))}
 
-
-
-</div>
-<h2 className="text-white mt-6 text-xl">🗑️ Deleted Users</h2>
+{/* 🔥 DELETED USERS */}
+<h3 className="text-white mt-6 text-lg">🗑️ Deleted Users</h3>
 
 {deletedUsers.map((u) => (
   <div
@@ -758,8 +757,9 @@ const totalPool = activeUsers.length * 99 + jackpot;
     </div>
   </div>
 ))}
+
 {deletedUsers.length === 0 && (
-  <p className="text-white mt-2">No deleted users</p>
+  <p className="text-white mt-2">No deleted users 😅</p>
 )}
       </motion.div>
     </div>
