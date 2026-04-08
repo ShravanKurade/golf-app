@@ -254,56 +254,48 @@ const options = {
   description: "Subscription Payment",
 
   handler: async function (response) {
-    console.log("Payment Success:", response);
 
-    // ✅ DATE CALCULATION
-    const start = new Date();
-    let end = new Date();
+  const { data: { user } } = await supabase.auth.getUser();
+  console.log("USER:", user);
 
-    if (selectedPlan === "monthly") {
-      end.setDate(start.getDate() + 30);
-    } else {
-      end.setFullYear(start.getFullYear() + 1);
-    }
+  if (!user) {
+    return toast.error("User not found ❌");
+  }
 
-    const validTill = end.toLocaleDateString();
+  console.log("Payment Success:", response);
 
-    // ✅ SUPABASE UPDATE
-    const { data: { user } } = await supabase.auth.getUser();
+  const start = new Date();
+  let end = new Date();
 
-    const { error } = await supabase
-  .from("profiles")
-  .update({
-    subscription_status: "active",
-    subscription_plan: selectedPlan,
-    subscription_amount: amount,
-    subscription_end: end
-  })
-  .eq("id", user.id);
+  if (selectedPlan === "monthly") {
+    end.setDate(start.getDate() + 30);
+  } else {
+    end.setFullYear(start.getFullYear() + 1);
+  }
 
-if (error) {
-  console.log("UPDATE ERROR:", error);
-  toast.error("DB update failed ❌");
-} else {
-  console.log("UPDATE SUCCESS ✅");
-}
+  const validTill = end.toLocaleDateString();
 
-    // ✅ EMAIL SEND
-    await emailjs.send(
-      import.meta.env.VITE_EMAILJS_SERVICE_ID,
-      import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-      {
-        user_email: user.email,
-        valid_till: validTill,
-        plan_amount: amount   // 🔥 SAME AMOUNT
-      },
-      import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-    );
+  // 🔥 DB UPDATE
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      subscription_status: "active",
+      subscription_plan: selectedPlan,
+      subscription_amount: amount,
+      subscription_end: end.toISOString()   // 🔥 IMPORTANT FIX
+    })
+    .eq("id", user.id);
 
-    await fetchProfile(); // 🔥 always DB se sync
+  if (error) {
+    console.log("UPDATE ERROR:", error);
+    return toast.error("DB update failed ❌");
+  }
 
-    toast.success("Payment successful 💳 + Email sent 📩");
-  },
+  // 🔥 REFRESH UI
+  await fetchProfile();
+
+  toast.success("Payment successful 💳");
+},
 
   prefill: {
   email: user.email,
