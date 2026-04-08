@@ -623,27 +623,16 @@ const totalDonated = draws.reduce((sum, d) => {
         >
           Enter Draw 🎯
         </button>
-<div className="flex flex-col items-center mt-6">
-
-  {/* 🎡 WHEEL */}
-  <motion.div
-    animate={{ rotate: angle }}
-    transition={{ duration: 2.5, ease: "easeOut" }}
-    className="w-48 h-48 rounded-full border-8 border-white flex items-center justify-center text-white text-xl font-bold bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 shadow-xl"
-  >
-    🎯
-  </motion.div>
-
-  {/* 🔻 POINTER */}
-  <div className="text-white text-3xl mt-2">⬇️</div>
-
-  {/* RESULT */}
-  {finalNumber && !spinning && (
-    <h2 className="text-white text-xl mt-3">
-      🎯 {finalNumber}
+<div className="text-center text-white mt-4">
+  {spinning ? (
+    <h2 className="text-2xl animate-pulse">
+      🎰 {displayNumbers.join(" - ")}
     </h2>
-  )}
-
+  ) : displayNumbers.length > 0 ? (
+    <h2 className="text-xl">
+      🎯 {displayNumbers.join(" - ")}
+    </h2>
+  ) : null}
 </div>
         {/* HISTORY */}
         <h3 className="text-white mt-6">📜 History</h3>
