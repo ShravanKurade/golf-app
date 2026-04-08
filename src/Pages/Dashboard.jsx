@@ -27,8 +27,6 @@ function Dashboard() {
   const [spinning, setSpinning] = useState(false);
   const [displayNumbers, setDisplayNumbers] = useState([]);
 
-  const [angle, setAngle] = useState(0);
-  const [finalNumber, setFinalNumber] = useState(null);
   
   // ================= FETCH =================
 
@@ -368,18 +366,23 @@ const playSound = () => {
   setSpinning(true);
   playSound();
 
-  // 🎯 random result
-  const drawNumbers = Array.from({ length: 5 }, () =>
-    Math.floor(Math.random() * 45) + 1
-  );
-
-  setFinalNumber(drawNumbers.join(", "));
-
-  // 🎡 wheel angle
-  const randomAngle = 360 * 5 + Math.floor(Math.random() * 360);
-  setAngle(randomAngle);
+  // 🔥 SPIN START
+  const spinInterval = setInterval(() => {
+    const temp = Array.from({ length: 5 }, () =>
+      Math.floor(Math.random() * 45) + 1
+    );
+    setDisplayNumbers(temp);
+  }, 100);
 
   setTimeout(async () => {
+    clearInterval(spinInterval);
+
+    // 🎯 FINAL NUMBERS
+    const drawNumbers = Array.from({ length: 5 }, () =>
+      Math.floor(Math.random() * 45) + 1
+    );
+
+    setDisplayNumbers(drawNumbers);
     setSpinning(false);
 
     const userNumbers = scores.map((s) => s.score);
