@@ -1,3 +1,4 @@
+import confetti from "canvas-confetti";
 import emailjs from "@emailjs/browser";
 import { motion } from "framer-motion";
 import { supabase } from "../supabase";
@@ -27,6 +28,7 @@ function Dashboard() {
   const [spinning, setSpinning] = useState(false);
   const [displayNumbers, setDisplayNumbers] = useState([]);
 
+  const [isJackpot, setIsJackpot] = useState(false);
   
   // ================= FETCH =================
 
@@ -346,9 +348,12 @@ const uploadProof = async (drawId) => {
   toast.success("Proof uploaded ✅");
   fetchHistory();
 };
-const playSound = () => {
+const playSpin = () => {
   const audio = new Audio("/spin.mp3");
+  audio.loop = true; // 🔥 continuous
+  audio.volume = 0.5;
   audio.play();
+  return audio;
 };
   const runDraw = async () => {
   if (subscription !== "active")
@@ -364,8 +369,8 @@ const playSound = () => {
     return toast.error("Minimum charity 10%");
 
   setSpinning(true);
-  playSound();
-
+  setDisplayNumbers([]);
+const spinAudio = playSpin();
   // 🔥 SPIN START
   const spinInterval = setInterval(() => {
     const temp = Array.from({ length: 5 }, () =>
@@ -376,6 +381,7 @@ const playSound = () => {
 
   setTimeout(async () => {
     clearInterval(spinInterval);
+    
 
     // 🎯 FINAL NUMBERS
     const drawNumbers = Array.from({ length: 5 }, () =>
@@ -384,7 +390,8 @@ const playSound = () => {
 
     setDisplayNumbers(drawNumbers);
     setSpinning(false);
-
+spinAudio.pause();
+spinAudio.currentTime = 0;
     const userNumbers = scores.map((s) => s.score);
 
     let matchCount = userNumbers.filter((n) =>
@@ -397,6 +404,7 @@ const playSound = () => {
     if (matchCount === 5) {
       message = "🥇 Jackpot";
       prize = `₹4000`;
+      setIsJackpot(true);
     } else if (matchCount === 4) {
       message = "🥈 4 Matches";
       prize = `₹3500`;
@@ -421,10 +429,21 @@ const playSound = () => {
 
     fetchHistory();
     fetchLatestDraw();
-
+// 🎉 CONFETTI
+if (matchCount >= 3) {
+  confetti({
+    particleCount: 150,
+    spread: 70,
+    origin: { y: 0.6 },
+  });
+  if (matchCount >= 3) {
+new Audio("/win.mp3").play();
+}
+}
     toast.success("Draw Completed 🎉");
-
+setTimeout(() => setIsJackpot(false), 4000);
   }, 2500);
+  
 };
 const totalWinnings = draws.reduce((sum, d) => {
   const match = d.result?.match(/₹(\d+)/);
@@ -626,6 +645,13 @@ const totalDonated = draws.reduce((sum, d) => {
         >
           Enter Draw 🎯
         </button>
+        {isJackpot && (
+  <div className="text-center mt-4 animate-bounce">
+    <h1 className="text-4xl font-bold text-yellow-300 drop-shadow-lg">
+      💰 JACKPOT WON 💰
+    </h1>
+  </div>
+)}
 <div className="text-center text-white mt-4">
   {spinning ? (
     <h2 className="text-2xl animate-pulse">
