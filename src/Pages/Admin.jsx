@@ -97,7 +97,7 @@ const deleteUserPermanent = async (id) => {
 
   try {
     // 🔥 1. DELETE FROM AUTH (backend API)
-    await fetch("/api/deleteUser", {
+    await fetch("https://zjyhtmlzcyipcdcafmqo.supabase.co/functions/v1/deleteUserUser", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
