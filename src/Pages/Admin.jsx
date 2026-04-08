@@ -467,8 +467,17 @@ const totalPool = activeUsers.length * 99 + jackpot;
   };
 
   useEffect(() => {
-    checkAdmin();
-  }, []);
+  checkAdmin();
+
+  const interval = setInterval(() => {
+    fetchUsers();
+    fetchSubscribers();
+    fetchAnalytics();
+    fetchDeletedUsers();
+  }, 2000); // 
+
+  return () => clearInterval(interval);
+}, []);
 
   if (loading) return <h1 className="text-center mt-10">Loading...</h1>;
 

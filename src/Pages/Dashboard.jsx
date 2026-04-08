@@ -28,90 +28,131 @@ function Dashboard() {
   
   // ================= FETCH =================
 
-  const fetchUserDraws = async () => {
+  // 🔥 COMMON USER GET (reuse everywhere)
+const getUser = async () => {
   const { data: { user } } = await supabase.auth.getUser();
+  return user;
+};
 
+// ================= USER DRAWS =================
+const fetchUserDraws = async () => {
+  const user = await getUser();
   if (!user) return;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("draws")
     .select("*")
     .eq("user_id", user.id);
 
+  if (error) {
+    console.log("Draws Error:", error);
+    return;
+  }
+
   setDraws(data || []);
 };
 
-  const fetchScores = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+// ================= SCORES =================
+const fetchScores = async () => {
+  const user = await getUser();
+  if (!user) return;
 
-    const { data } = await supabase
-      .from("scores")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("id", { ascending: false })
-      .limit(5);
+  const { data, error } = await supabase
+    .from("scores")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("id", { ascending: false })
+    .limit(5);
 
-    setScores(data || []);
-  };
+  if (error) {
+    console.log("Scores Error:", error);
+    return;
+  }
 
-  const fetchHistory = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  setScores(data || []);
+};
 
-    const { data } = await supabase
-      .from("draws")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("id", { ascending: false })
-      .limit(5);
+// ================= HISTORY =================
+const fetchHistory = async () => {
+  const user = await getUser();
+  if (!user) return;
 
-    setHistory(data || []);
-  };
+  const { data, error } = await supabase
+    .from("draws")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("id", { ascending: false })
+    .limit(5);
 
-  const fetchLatestDraw = async () => {
-    const { data } = await supabase
-      .from("draws")
-      .select("*")
-      .order("id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  if (error) {
+    console.log("History Error:", error);
+    return;
+  }
 
-    setLatestDraw(data);
-  };
+  setHistory(data || []);
+};
 
-  const fetchProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+// ================= LATEST DRAW =================
+const fetchLatestDraw = async () => {
+  const { data, error } = await supabase
+    .from("draws")
+    .select("*")
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-    const { data } = await supabase
-      .from("profiles")
-      .select("subscription_status, subscription_end,subscription_plan")
-      .eq("id", user.id)
-      .maybeSingle();
+  if (error) {
+    console.log("Latest Draw Error:", error);
+    return;
+  }
 
-    if (data?.subscription_end) {
-      const now = new Date();
-      const end = new Date(data.subscription_end);
+  setLatestDraw(data);
+};
 
-      if (now > end) {
-        setSubscription("inactive");
+// ================= PROFILE =================
+const fetchProfile = async () => {
+  const user = await getUser();
+  if (!user) return;
 
-        await supabase
-          .from("profiles")
-          .update({ subscription_status: "inactive" })
-          .eq("id", user.id);
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("subscription_status, subscription_end, subscription_plan")
+    .eq("id", user.id)
+    .maybeSingle();
 
-        toast.error("Subscription expired ❌");
-      } else {
-        setSubscription("active");
-        setSubscriptionEnd(new Date(data.subscription_end));
-        setSubscriptionPlan(data?.subscription_plan || "");
-      }
-    } else {
+  if (error) {
+    console.log("Profile Error:", error);
+    return;
+  }
+
+  if (!data) {
+    setSubscription("inactive");
+    return;
+  }
+
+  // 🔥 DATE CHECK
+  if (data.subscription_end) {
+    const now = new Date();
+    const end = new Date(data.subscription_end);
+
+    if (now > end) {
       setSubscription("inactive");
+
+      await supabase
+        .from("profiles")
+        .update({ subscription_status: "inactive" })
+        .eq("id", user.id);
+
+      toast.error("Subscription expired ❌");
+    } else {
+      setSubscription("active");
+      setSubscriptionEnd(end);
+      setSubscriptionPlan(data.subscription_plan || "");
     }
-  };
+  } else {
+    setSubscription("inactive");
+  }
+};
 
   const fetchCharities = async () => {
     const { data } = await supabase.from("charities").select("*");
@@ -120,6 +161,7 @@ function Dashboard() {
 
   useEffect(() => {
 
+  // ⏳ TIMER
   const interval = setInterval(() => {
     const nextDraw = new Date();
     nextDraw.setDate(nextDraw.getDate() + 7);
@@ -132,6 +174,7 @@ function Dashboard() {
     setTimeLeft(`${days}d ${hours}h left`);
   }, 1000);
 
+  // 👤 USER CHECK
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -140,7 +183,7 @@ function Dashboard() {
     } else {
       fetchScores();
       fetchHistory();
-      fetchProfile();
+      fetchProfile(); // ✅ FIRST CALL
       fetchLatestDraw();
       fetchCharities();  
       fetchUserDraws();
@@ -149,7 +192,16 @@ function Dashboard() {
 
   checkUser();
 
-  return () => clearInterval(interval); 
+  // 🔥 AUTO REFRESH PROFILE (IMPORTANT)
+  const profileInterval = setInterval(() => {
+    fetchProfile();
+  }, 2000);
+
+  return () => {
+    clearInterval(interval);
+    clearInterval(profileInterval); // ✅ cleanup
+  };
+
 }, []);
 
   // ================= ADD SCORE =================
@@ -219,15 +271,20 @@ const options = {
     // ✅ SUPABASE UPDATE
     const { data: { user } } = await supabase.auth.getUser();
 
-    await supabase
-      .from("profiles")
-      .update({
-        subscription_status: "active",
-        subscription_plan: selectedPlan,
-        subscription_amount: amount,   // 🔥 SAME AMOUNT
-        subscription_end: end
-      })
-      .eq("id", user.id);
+    const { error } = await supabase
+  .from("profiles")
+  .update({
+    subscription_status: "active",
+    subscription_plan: selectedPlan,
+    subscription_amount: amount,
+    subscription_end: end
+  })
+  .eq("id", user.id);
+
+if (error) {
+  console.log("DB ERROR:", error);
+  return toast.error("DB update failed ❌");
+}
 
     // ✅ EMAIL SEND
     await emailjs.send(
