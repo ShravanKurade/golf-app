@@ -195,33 +195,23 @@ function Dashboard() {
   };
 
 
-  useEffect(() => {
-    bgAudio.loop = true;
-    bgAudio.volume = 0.3;
+ useEffect(() => {
+  // 🎵 BACKGROUND MUSIC
+  bgAudio.loop = true;
+  bgAudio.volume = 0.3;
 
-    // try autoplay
-    bgAudio.play().then(() => {
-      setIsMusicPlaying(true);
-    }).catch(() => {
-      console.log("Autoplay blocked 😢");
-    });
+  bgAudio.play()
+    .then(() => setIsMusicPlaying(true))
+    .catch(() => console.log("Autoplay blocked 😢"));
 
-    // fallback → first click pe chalega
-    const startMusicOnClick = () => {
-      bgAudio.play();
-      setIsMusicPlaying(true);
-      window.removeEventListener("click", startMusicOnClick);
-    };
+  const startMusicOnClick = () => {
+    bgAudio.play();
+    setIsMusicPlaying(true);
+    window.removeEventListener("click", startMusicOnClick);
+  };
 
-    window.addEventListener("click", startMusicOnClick);
+  window.addEventListener("click", startMusicOnClick);
 
-    return () => {
-      window.removeEventListener("click", startMusicOnClick);
-
-      bgAudio.pause();
-      bgAudio.currentTime = 0;
-    };
-  }, []);
   // ⏳ TIMER
   const interval = setInterval(() => {
     const nextDraw = new Date();
@@ -235,7 +225,7 @@ function Dashboard() {
     setTimeLeft(`${days}d ${hours}h left`);
   }, 1000);
 
-  // 👤 USER CHECK
+  // 👤 USER CHECK + DATA FETCH
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -244,7 +234,7 @@ function Dashboard() {
     } else {
       fetchScores();
       fetchHistory();
-      fetchProfile(); // ✅ FIRST CALL
+      fetchProfile();
       fetchLatestDraw();
       fetchCharities();
       fetchUserDraws();
@@ -253,15 +243,23 @@ function Dashboard() {
 
   checkUser();
 
-  // 🔥 AUTO REFRESH PROFILE (IMPORTANT)
+  // 🔥 PROFILE AUTO REFRESH
   const profileInterval = setInterval(() => {
     fetchProfile();
   }, 2000);
 
+  // 🧹 CLEANUP (VERY IMPORTANT)
   return () => {
     clearInterval(interval);
-    clearInterval(profileInterval); // ✅ cleanup
+    clearInterval(profileInterval);
+
+    window.removeEventListener("click", startMusicOnClick);
+
+    bgAudio.pause();
+    bgAudio.currentTime = 0;
   };
+
+}, []);
 // ================= ADD SCORE =================
 const addScore = async () => {
   if (subscription !== "active") {
