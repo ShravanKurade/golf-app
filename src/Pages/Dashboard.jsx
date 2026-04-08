@@ -24,6 +24,8 @@ function Dashboard() {
   const [selectedCharity, setSelectedCharity] = useState("");
   const [charityPercent, setCharityPercent] = useState(10);
 
+  const [spinning, setSpinning] = useState(false);
+  const [displayNumbers, setDisplayNumbers] = useState([]);
 
   
   // ================= FETCH =================
@@ -344,22 +346,44 @@ const uploadProof = async (drawId) => {
   toast.success("Proof uploaded ✅");
   fetchHistory();
 };
+const playSound = () => {
+  const audio = new Audio("/spin.mp3");
+  audio.play();
+};
   const runDraw = async () => {
-    if (subscription !== "active")
-      return toast.error("Buy Premium first");
+  if (subscription !== "active")
+    return toast.error("Buy Premium first");
 
-    if (scores.length < 5)
-      return toast.error("Add 5 scores");
+  if (scores.length < 5)
+    return toast.error("Add 5 scores");
 
-    if (!selectedCharity)
-      return toast.error("Select charity ❤️");
+  if (!selectedCharity)
+    return toast.error("Select charity ❤️");
 
-    if (charityPercent < 10)
-      return toast.error("Minimum charity 10%");
+  if (charityPercent < 10)
+    return toast.error("Minimum charity 10%");
 
+  // 🎰 START SPIN
+  setSpinning(true);
+  playSound();
+
+  const spinInterval = setInterval(() => {
+    const temp = Array.from({ length: 5 }, () =>
+      Math.floor(Math.random() * 45) + 1
+    );
+    setDisplayNumbers(temp);
+  }, 100);
+
+  setTimeout(async () => {
+    clearInterval(spinInterval);
+
+    // 🎯 FINAL RESULT
     const drawNumbers = Array.from({ length: 5 }, () =>
       Math.floor(Math.random() * 45) + 1
     );
+
+    setDisplayNumbers(drawNumbers);
+    setSpinning(false);
 
     const userNumbers = scores.map((s) => s.score);
 
@@ -367,20 +391,18 @@ const uploadProof = async (drawId) => {
       drawNumbers.includes(n)
     ).length;
 
-    const totalPool = 10000;
-
     let message = "";
     let prize = "";
 
     if (matchCount === 5) {
       message = "🥇 Jackpot";
-      prize = `₹${Math.floor(totalPool * 0.4)}`;
+      prize = `₹4000`;
     } else if (matchCount === 4) {
       message = "🥈 4 Matches";
-      prize = `₹${Math.floor(totalPool * 0.35)}`;
+      prize = `₹3500`;
     } else if (matchCount === 3) {
       message = "🥉 3 Matches";
-      prize = `₹${Math.floor(totalPool * 0.25)}`;
+      prize = `₹2500`;
     } else {
       message = "😢 No Win";
       prize = "₹0";
@@ -400,8 +422,10 @@ const uploadProof = async (drawId) => {
     fetchHistory();
     fetchLatestDraw();
 
-    toast.success("Entered Draw 🎯");
-  };
+    toast.success("Draw Completed 🎉");
+
+  }, 3000); // ⏱️ 3 sec
+};
 const totalWinnings = draws.reduce((sum, d) => {
   const match = d.result?.match(/₹(\d+)/);
   return sum + (match ? Number(match[1]) : 0);
@@ -594,7 +618,17 @@ const totalDonated = draws.reduce((sum, d) => {
         <p className="text-white mt-3 font-bold">
   🎯 Your: {scores.map((s) => s.score).join(", ")}
 </p>
-
+<div className="text-center text-white mt-4">
+  {spinning ? (
+    <h2 className="text-2xl animate-pulse">
+      🎰 {displayNumbers.join(" - ")}
+    </h2>
+  ) : displayNumbers.length > 0 ? (
+    <h2 className="text-xl">
+      🎯 {displayNumbers.join(" - ")}
+    </h2>
+  ) : null}
+</div>
         {/* DRAW */}
         <button
           className="bg-purple-500 w-full py-2 mt-4 rounded text-white hover:bg-purple-600 hover:scale-105 hover:shadow-lg transition duration-300"
