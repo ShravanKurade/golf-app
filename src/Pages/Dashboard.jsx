@@ -606,7 +606,7 @@ const totalDonated = draws.reduce((sum, d) => {
         <ul className="mt-2 space-y-2">
           {history.map((h) => (
             <li key={h.id} className="bg-white/30 p-2 rounded text-white">
-              🎯 {h.result}
+              🎯 {h.numbers} | {h.result}
             </li>
           ))}
         </ul>
