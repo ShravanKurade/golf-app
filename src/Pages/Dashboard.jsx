@@ -27,6 +27,8 @@ function Dashboard() {
   const [spinning, setSpinning] = useState(false);
   const [displayNumbers, setDisplayNumbers] = useState([]);
 
+  const [angle, setAngle] = useState(0);
+  const [finalNumber, setFinalNumber] = useState(null);
   
   // ================= FETCH =================
 
@@ -363,26 +365,21 @@ const playSound = () => {
   if (charityPercent < 10)
     return toast.error("Minimum charity 10%");
 
-  // 🎰 START SPIN
   setSpinning(true);
   playSound();
 
-  const spinInterval = setInterval(() => {
-    const temp = Array.from({ length: 5 }, () =>
-      Math.floor(Math.random() * 45) + 1
-    );
-    setDisplayNumbers(temp);
-  }, 100);
+  // 🎯 random result
+  const drawNumbers = Array.from({ length: 5 }, () =>
+    Math.floor(Math.random() * 45) + 1
+  );
+
+  setFinalNumber(drawNumbers.join(", "));
+
+  // 🎡 wheel angle
+  const randomAngle = 360 * 5 + Math.floor(Math.random() * 360);
+  setAngle(randomAngle);
 
   setTimeout(async () => {
-    clearInterval(spinInterval);
-
-    // 🎯 FINAL RESULT
-    const drawNumbers = Array.from({ length: 5 }, () =>
-      Math.floor(Math.random() * 45) + 1
-    );
-
-    setDisplayNumbers(drawNumbers);
     setSpinning(false);
 
     const userNumbers = scores.map((s) => s.score);
@@ -424,7 +421,7 @@ const playSound = () => {
 
     toast.success("Draw Completed 🎉");
 
-  }, 2600); // ⏱️ 2.5 sec
+  }, 2500);
 };
 const totalWinnings = draws.reduce((sum, d) => {
   const match = d.result?.match(/₹(\d+)/);
@@ -618,17 +615,7 @@ const totalDonated = draws.reduce((sum, d) => {
         <p className="text-white mt-3 font-bold">
   🎯 Your: {scores.map((s) => s.score).join(", ")}
 </p>
-<div className="text-center text-white mt-4">
-  {spinning ? (
-    <h2 className="text-2xl animate-pulse">
-      🎰 {displayNumbers.join(" - ")}
-    </h2>
-  ) : displayNumbers.length > 0 ? (
-    <h2 className="text-xl">
-      🎯 {displayNumbers.join(" - ")}
-    </h2>
-  ) : null}
-</div>
+
         {/* DRAW */}
         <button
           className="bg-purple-500 w-full py-2 mt-4 rounded text-white hover:bg-purple-600 hover:scale-105 hover:shadow-lg transition duration-300"
@@ -636,7 +623,28 @@ const totalDonated = draws.reduce((sum, d) => {
         >
           Enter Draw 🎯
         </button>
+<div className="flex flex-col items-center mt-6">
 
+  {/* 🎡 WHEEL */}
+  <motion.div
+    animate={{ rotate: angle }}
+    transition={{ duration: 2.5, ease: "easeOut" }}
+    className="w-48 h-48 rounded-full border-8 border-white flex items-center justify-center text-white text-xl font-bold bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 shadow-xl"
+  >
+    🎯
+  </motion.div>
+
+  {/* 🔻 POINTER */}
+  <div className="text-white text-3xl mt-2">⬇️</div>
+
+  {/* RESULT */}
+  {finalNumber && !spinning && (
+    <h2 className="text-white text-xl mt-3">
+      🎯 {finalNumber}
+    </h2>
+  )}
+
+</div>
         {/* HISTORY */}
         <h3 className="text-white mt-6">📜 History</h3>
 
