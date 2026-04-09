@@ -233,7 +233,14 @@ function Dashboard() {
   // 👤 USER CHECK + DATA FETCH
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-
+if (user) {
+  await supabase.from("profiles").upsert([
+    {
+      id: user.id,
+      email: user.email,
+    },
+  ]);
+}
     if (!user) {
       navigate("/login");
     } else {
