@@ -6,6 +6,7 @@ import { supabase } from "../supabase";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import html2canvas from "html2canvas";
 
 function Dashboard() {
   const [selectedPlan, setSelectedPlan] = useState("monthly");
@@ -34,6 +35,8 @@ function Dashboard() {
   const [bgAudio] = useState(new Audio("/bg.mp3"));
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
+  
+  const dashboardRef = useRef();
 
   const spinAudioRef = useRef(new Audio("/spin.mp3"));
   spinAudioRef.current.loop = true;
@@ -196,6 +199,8 @@ function Dashboard() {
 
 
  useEffect(() => {
+
+  spinAudioRef.current.loop = true;
   // 🎵 BACKGROUND MUSIC
   bgAudio.loop = true;
   bgAudio.volume = 0.3;
@@ -450,17 +455,11 @@ const runDraw = async () => {
     let prize = "";
 
     if (matchCount === 5) {
-      message = "🥇 Jackpot";
-      prize = `₹4000`;
-      setIsJackpot(true);
-      playWin();
-
-      document.body.classList.add("animate-shake");
-
-      setTimeout(() => {
-        document.body.classList.remove("animate-shake");
-      }, 500);
-
+  message = "🥇 Jackpot";
+  prize = `₹4000`;
+  setIsJackpot(true);
+  playWin();
+  
     } else if (matchCount === 4) {
       message = "🥈 4 Matches";
       prize = `₹3500`;
@@ -478,24 +477,60 @@ const runDraw = async () => {
     }
 
     // 🎉 CONFETTI
-    if (matchCount >= 3) {
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
-    }
+    // 🎉 CONFETTI
+// 🎉 CONFETTI
+if (matchCount >= 3) {
+  confetti({
+    particleCount: 150,
+    spread: 70,
+    origin: { y: 0.6 },
+  });
+}
 
-    const { data: { user } } = await supabase.auth.getUser();
+const { data: { user } } = await supabase.auth.getUser();
 
-    await supabase.from("draws").insert([
-      {
-        user_id: user.id,
-        numbers: drawNumbers.join(", "),
-        matches: matchCount,
-        result: `${message} | Prize: ${prize} | Charity: ${selectedCharity} (${charityPercent}%)`,
-      },
-    ]);
+// ✅ STEP 1: INSERT FIRST
+const { data: drawData, error } = await supabase
+  .from("draws")
+  .insert([
+    {
+      user_id: user.id,
+      numbers: drawNumbers.join(", "),
+      matches: matchCount,
+      result: `${message} | Prize: ${prize} | Charity: ${selectedCharity} (${charityPercent}%)`,
+    },
+  ])
+  .select()
+  .single();
+
+if (error) {
+  console.log("Insert Error:", error);
+  return toast.error("Draw save failed ❌");
+}
+
+const drawId = drawData.id; // ✅ ID mil gaya
+
+// ✅ STEP 2: ONLY IF JACKPOT → SCREENSHOT
+if (matchCount === 5) {
+  const canvas = await html2canvas(dashboardRef.current);
+  const image = canvas.toDataURL("image/png");
+
+  const blob = await (await fetch(image)).blob();
+  const fileName = `jackpot_${Date.now()}.png`;
+
+  await supabase.storage.from("proofs").upload(fileName, blob);
+
+  const publicUrl = supabase
+    .storage
+    .from("proofs")
+    .getPublicUrl(fileName).data.publicUrl;
+
+  // ✅ STEP 3: UPDATE DB
+  await supabase
+    .from("draws")
+    .update({ screenshot_url: publicUrl })
+    .eq("id", drawId);
+}
 
     fetchHistory();
     fetchLatestDraw();
@@ -519,29 +554,33 @@ const totalDonated = draws.reduce((sum, d) => {
 }, 0);
 // ================= UI =================
 return (
-  <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6 relative">
+  <div ref={dashboardRef}> {/* 🔥 NEW WRAPPER */}
 
-    <button
-      onClick={() => {
-        if (isMusicPlaying) {
-          bgAudio.pause();
-          bgAudio.currentTime = 0;
-          setIsMusicPlaying(false);
-        } else {
-          bgAudio.play();
-          setIsMusicPlaying(true);
-        }
-      }}
-      className="absolute top-4 right-4 bg-black/40 text-white px-3 py-1 rounded-full border border-white/20 hover:scale-110 transition"
-    >
-      {isMusicPlaying ? "🔊 ON" : "🔇 OFF"}
-    </button>
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="max-w-2xl mx-auto bg-white/20 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20"
-    >
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6 relative">
+
+      <button
+        onClick={() => {
+          if (isMusicPlaying) {
+            bgAudio.pause();
+            bgAudio.currentTime = 0;
+            setIsMusicPlaying(false);
+          } else {
+            bgAudio.play();
+            setIsMusicPlaying(true);
+          }
+        }}
+        className="absolute top-4 right-4 bg-black/40 text-white px-3 py-1 rounded-full border border-white/20 hover:scale-110 transition"
+      >
+        {isMusicPlaying ? "🔊 ON" : "🔇 OFF"}
+      </button>
+
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-2xl mx-auto bg-white/20 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20"
+      >
+
 
       <h1 className="text-3xl font-bold text-white text-center">
         🎯 Your Golf Dashboard
@@ -763,6 +802,7 @@ return (
         </button>
       </div>
     </motion.div>
+  </div>
   </div>
 );
 }
