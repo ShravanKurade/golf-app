@@ -9,6 +9,9 @@ import toast from "react-hot-toast";
 import html2canvas from "html2canvas";
 
 function Dashboard() {
+  const [coins, setCoins] = useState(0);
+  const [lastPlayed, setLastPlayed] = useState(null);
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
   const [volume, setVolume] = useState(0.3);
   const [selectedPlan, setSelectedPlan] = useState("monthly");
   const navigate = useNavigate();
@@ -41,6 +44,31 @@ function Dashboard() {
 
   const spinAudioRef = useRef(new Audio("/spin.mp3"));
   spinAudioRef.current.loop = true;
+
+  const claimBonus = async () => {
+  const today = new Date().toDateString();
+
+  if (lastPlayed === today) {
+    return toast.error("Already claimed today ❌");
+  }
+
+  const user = await getUser();
+
+  const bonus = subscription === "active" ? 20 : 10;
+
+  await supabase
+    .from("profiles")
+    .update({
+      last_played: today,
+      coins: coins + bonus
+    })
+    .eq("id", user.id);
+
+  setCoins(coins + bonus);
+  setLastPlayed(today);
+
+  toast.success(`🎁 +${bonus} coins`);
+};
 
   const playSpin = () => {
     const audio = spinAudioRef.current;
@@ -132,24 +160,11 @@ function Dashboard() {
   };
 
   // ================= LATEST DRAW =================
-  const fetchLatestDraw = async () => {
-    const { data, error } = await supabase
-      .from("draws")
-      .select("*")
-      .order("id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.log("Latest Draw Error:", error);
-      return;
-    }
-
-    setLatestDraw(data);
-  };
+  
 
   // ================= PROFILE =================
-  const fetchProfile = async () => {
+  async function fetchProfile() {
+
     const user = await getUser();
     if (!user) return;
 
@@ -168,7 +183,10 @@ function Dashboard() {
       setSubscription("inactive");
       return;
     }
-
+    if (data) {
+      setCoins(data.coins || 0);
+      if (data.last_played) setLastPlayed(data.last_played);
+    }
     // 🔥 DATE CHECK
     if (data.subscription_end) {
       const now = new Date();
@@ -191,7 +209,7 @@ function Dashboard() {
     } else {
       setSubscription("inactive");
     }
-  };
+  }
 
   const fetchCharities = async () => {
     const { data } = await supabase.from("charities").select("*");
@@ -233,6 +251,29 @@ function Dashboard() {
 
   // 👤 USER CHECK + DATA FETCH
   const checkUser = async () => {
+    const giveFirstBonus = async () => {
+  const user = await getUser();
+  if (!user) return;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("coins, bonus_claimed")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (data?.bonus_claimed) return;
+
+  await supabase
+    .from("profiles")
+    .update({
+      coins: (data?.coins || 0) + 500,
+      bonus_claimed: true
+    })
+    .eq("id", user.id);
+
+  setCoins((data?.coins || 0) + 500);
+  toast.success("🎉 Welcome Bonus: 500 Coins 🪙");
+};
     const { data: { user } } = await supabase.auth.getUser();
 if (user) {
   await supabase.from("profiles").upsert([
@@ -241,6 +282,8 @@ if (user) {
       email: user.email,
     },
   ]);
+  await giveFirstBonus();
+
 }
     if (!user) {
       navigate("/login");
@@ -284,9 +327,11 @@ const getAISuggestion = () => {
 };
 // ================= ADD SCORE =================
 const addScore = async () => {
-  if (subscription !== "active") {
-    return toast.error("Buy Premium first 💳");
-  }
+  // FREE USER + LOW COINS
+if (subscription !== "active" && coins < 5) {
+  setShowUpgradePopup(true);
+  return;
+}
 
   if (!input || input < 1 || input > 45) {
     return toast.error("Score must be 1–45 ❌");
@@ -424,8 +469,10 @@ const uploadProof = async (drawId) => {
   fetchHistory();
 };
 const runDraw = async () => {
-  if (subscription !== "active")
-    return toast.error("Buy Premium first");
+  if (subscription !== "active" && coins < 5) {
+  setShowUpgradePopup(true);
+  return;
+}
 
   if (scores.length < 5)
     return toast.error("Add 5 scores");
@@ -503,15 +550,15 @@ if (matchCount >= 3) {
     origin: { y: 0.6 },
   });
 }
+// ✅ STEP 1: INSERT FIRST
 
 const { data: { user } } = await supabase.auth.getUser();
 
-// ✅ STEP 1: INSERT FIRST
 const { data: drawData, error } = await supabase
   .from("draws")
   .insert([
     {
-      user_id: user.id,
+      user_id: user.id, // ✅ ab error nahi aayega
       numbers: drawNumbers.join(", "),
       matches: matchCount,
       result: `${message} | Prize: ${prize} | Charity: ${selectedCharity} (${charityPercent}%)`,
@@ -551,6 +598,30 @@ if (matchCount === 5) {
 
     fetchHistory();
     fetchLatestDraw();
+
+// 💎 PREMIUM USER
+if (subscription === "active") {
+  await supabase
+    .from("profiles")
+    .update({
+      coins: coins + 2
+    })
+    .eq("id", user.id);
+
+  setCoins(coins + 2);
+}
+
+// 🟢 FREE USER
+else {
+  await supabase
+    .from("profiles")
+    .update({
+      coins: coins - 5
+    })
+    .eq("id", user.id);
+
+  setCoins(coins - 5);
+}
 
     toast.success("Draw Completed 🎉");
 
@@ -621,9 +692,10 @@ return (
       <h1 className="text-3xl font-bold text-white text-center">
         🎯 Your Golf Dashboard
       </h1>
-      <p className="text-white text-center mt-2">
-        ⏳ Next Draw: {timeLeft}
-      </p>
+      <p className="text-yellow-300 text-center mt-2 font-bold">
+  🪙 Coins: {coins}
+</p>
+      
       <p className="text-white text-center mt-2 mb-4 text-sm opacity-90">
         Play Golf. Win Rewards. Change Lives ❤️
       </p>
@@ -760,7 +832,21 @@ return (
         value={charityPercent}
         onChange={(e) => setCharityPercent(e.target.value)}
       />
+{/* 🎁 DAILY BONUS */}
+<button
+  onClick={claimBonus}
+  className="bg-yellow-500 w-full py-2 mt-3 rounded text-white"
+>
+  🎁 Claim Daily Bonus
+</button>
 
+{/* 🏆 LEADERBOARD BUTTON */}
+<button
+  onClick={() => navigate("/leaderboard")}
+  className="bg-blue-500 w-full py-2 mt-3 rounded text-white"
+>
+  🏆 View Leaderboard
+</button>
       {/* ADD SCORE */}
       <h3 className="text-white mt-4">Add Score(1-45)</h3>
 <button
@@ -844,6 +930,47 @@ return (
         >
           Logout
         </button>
+        {showUpgradePopup && (
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+
+    <div className="bg-white p-6 rounded-2xl text-center w-[90%] max-w-sm shadow-xl">
+
+      <h2 className="text-xl font-bold mb-2">
+        💰 Low Coins!
+      </h2>
+
+      <p className="text-gray-600 mb-4">
+        Not enough coins 😢
+      </p>
+
+      <p className="text-purple-600 font-semibold mb-4">
+        Upgrade to Premium 🎯
+      </p>
+
+      <div className="flex gap-2">
+
+        <button
+          onClick={() => {
+            setShowUpgradePopup(false);
+            handlePayment();
+          }}
+          className="flex-1 bg-purple-500 text-white py-2 rounded"
+        >
+          Upgrade 🚀
+        </button>
+
+        <button
+          onClick={() => setShowUpgradePopup(false)}
+          className="flex-1 bg-gray-300 py-2 rounded"
+        >
+          Cancel
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+)}
       </div>
     </motion.div>
   </div>
