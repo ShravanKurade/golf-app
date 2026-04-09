@@ -4,6 +4,7 @@ import { supabase } from "../supabase";
 import toast from "react-hot-toast";
 
 function Admin() {
+  const [selectedImage, setSelectedImage] = useState(null);
   const [search, setSearch] = useState("");
   const [deletedUsers, setDeletedUsers] = useState([]);
   const [lastDeletedUser, setLastDeletedUser] = useState(null);
@@ -601,10 +602,10 @@ const totalPool = activeUsers.length * 99 + jackpot;
       )}
       {d.screenshot_url && (
   <img
-    src={d.screenshot_url}
-    className="w-20 h-20 rounded mt-2 cursor-pointer border border-white/30 hover:scale-110 transition"
-    onClick={() => window.open(d.screenshot_url)}
-  />
+  src={d.screenshot_url}
+  className="w-20 h-20 rounded mt-2 cursor-pointer border border-white/30 hover:scale-110 transition"
+  onClick={() => setSelectedImage(d.screenshot_url)}
+/>
 )}
       <button
         className="bg-green-500 px-3 py-1 rounded text-sm"
@@ -743,7 +744,7 @@ const totalPool = activeUsers.length * 99 + jackpot;
       <div>
         {u.id.slice(0, 6)} <br />
         Role: {u.role || "user"} <br />
-
+        Email: {u.email || "No email"} <br />
         Status:
         <span
           className={`ml-1 font-bold ${
@@ -812,9 +813,18 @@ const totalPool = activeUsers.length * 99 + jackpot;
   <p className="text-white mt-2">No deleted users 😅</p>
 )}
       </motion.div>
+      {selectedImage && (
+  <div
+    className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+    onClick={() => setSelectedImage(null)}
+  >
+    <img
+      src={selectedImage}
+      className="max-w-[90%] max-h-[90%] rounded-xl shadow-lg"
+    />
+  </div>
+)}
     </div>
   );
 }
-
-
 export default Admin;
