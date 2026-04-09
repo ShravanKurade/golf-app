@@ -4,6 +4,7 @@ import { supabase } from "../supabase";
 import toast from "react-hot-toast";
 
 function Admin() {
+  const [search, setSearch] = useState("");
   const [deletedUsers, setDeletedUsers] = useState([]);
   const [lastDeletedUser, setLastDeletedUser] = useState(null);
   const [editId, setEditId] = useState(null);
@@ -598,7 +599,13 @@ const totalPool = activeUsers.length * 99 + jackpot;
           📸 View
         </a>
       )}
-
+      {d.screenshot_url && (
+  <img
+    src={d.screenshot_url}
+    className="w-20 h-20 rounded mt-2 cursor-pointer border border-white/30 hover:scale-110 transition"
+    onClick={() => window.open(d.screenshot_url)}
+  />
+)}
       <button
         className="bg-green-500 px-3 py-1 rounded text-sm"
         onClick={() => verifyWinner(d.id, "approved")}
@@ -718,34 +725,57 @@ const totalPool = activeUsers.length * 99 + jackpot;
 
 {/* 🔥 ACTIVE USERS */}
 <h3 className="text-white mt-4 text-lg">👤 Active Users</h3>
+<input
+  placeholder="Search user..."
+  className="p-2 rounded mt-2 mb-2 w-full"
+  onChange={(e) => setSearch(e.target.value)}
+/>
+{users
+  .filter((u) =>
+    u.id.toLowerCase().includes(search.toLowerCase()) ||
+    u.email?.toLowerCase().includes(search.toLowerCase())
+  )
+  .map((u) => (
+    <div
+      key={u.id}
+      className="bg-white/20 p-2 mt-2 text-white flex justify-between items-center rounded"
+    >
+      <div>
+        {u.id.slice(0, 6)} <br />
+        Role: {u.role || "user"} <br />
 
-{users.map((u) => (
-  <div
-    key={u.id}
-    className="bg-white/20 p-2 mt-2 text-white flex justify-between items-center rounded"
-  >
-    <div>
-      {u.id.slice(0, 6)} <br />
-      Role: {u.role || "user"}
+        Status:
+        <span
+          className={`ml-1 font-bold ${
+            u.subscription_status === "active"
+              ? "text-green-400"
+              : "text-red-400"
+          }`}
+        >
+          {u.subscription_status || "inactive"}
+        </span>
+
+        <br />
+        Plan: {u.subscription_plan || "Free"}
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => toggleRole(u.id, u.role)}
+          className="bg-blue-500 px-2 rounded"
+        >
+          Toggle Role
+        </button>
+
+        <button
+          onClick={() => deleteUser(u.id)}
+          className="bg-red-500 px-2 rounded"
+        >
+          Delete ❌
+        </button>
+      </div>
     </div>
-
-    <div className="flex gap-2">
-      <button
-        onClick={() => toggleRole(u.id, u.role)}
-        className="bg-blue-500 px-2 rounded"
-      >
-        Toggle Role
-      </button>
-
-      <button
-        onClick={() => deleteUser(u.id)}
-        className="bg-red-500 px-2 rounded"
-      >
-        Delete ❌
-      </button>
-    </div>
-  </div>
-))}
+  ))}
 
 {/* 🔥 DELETED USERS */}
 <h3 className="text-white mt-6 text-lg">🗑️ Deleted Users</h3>
