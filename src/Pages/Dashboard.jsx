@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import html2canvas from "html2canvas";
 
 function Dashboard() {
+  const [volume, setVolume] = useState(0.3);
   const [selectedPlan, setSelectedPlan] = useState("monthly");
   const navigate = useNavigate();
   const [subscriptionPlan, setSubscriptionPlan] = useState("");
@@ -272,6 +273,15 @@ if (user) {
   };
 
 }, []);
+const getAISuggestion = () => {
+  const nums = new Set();
+
+  while (nums.size < 5) {
+    nums.add(Math.floor(Math.random() * 45) + 1);
+  }
+
+  return Array.from(nums);
+};
 // ================= ADD SCORE =================
 const addScore = async () => {
   if (subscription !== "active") {
@@ -563,24 +573,41 @@ const totalDonated = draws.reduce((sum, d) => {
 return (
   <div ref={dashboardRef}> {/* 🔥 NEW WRAPPER */}
 
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6 relative">
+    <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
 
-      <button
-        onClick={() => {
-          if (isMusicPlaying) {
-            bgAudio.pause();
-            bgAudio.currentTime = 0;
-            setIsMusicPlaying(false);
-          } else {
-            bgAudio.play();
-            setIsMusicPlaying(true);
-          }
-        }}
-        className="absolute top-4 right-4 bg-black/40 text-white px-3 py-1 rounded-full border border-white/20 hover:scale-110 transition"
-      >
-        {isMusicPlaying ? "🔊 ON" : "🔇 OFF"}
-      </button>
+  {/* 🔊 SOUND BUTTON */}
+  <button
+    onClick={() => {
+      if (isMusicPlaying) {
+        bgAudio.pause();
+        bgAudio.currentTime = 0;
+        setIsMusicPlaying(false);
+      } else {
+        bgAudio.play();
+        setIsMusicPlaying(true);
+      }
+    }}
+    className="bg-black/40 text-white px-3 py-1 rounded-full border border-white/20 text-sm"
+  >
+    {isMusicPlaying ? "🔊 ON" : "🔇 OFF"}
+  </button>
 
+  {/* 🎚️ VOLUME SLIDER */}
+  <input
+    type="range"
+    min="0"
+    max="1"
+    step="0.1"
+    value={volume}
+    onChange={(e) => {
+      const val = Number(e.target.value);
+      setVolume(val);
+      bgAudio.volume = val;
+    }}
+    className="w-20"
+  />
+
+</div>
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -734,7 +761,15 @@ return (
 
       {/* ADD SCORE */}
       <h3 className="text-white mt-4">Add Score(1-45)</h3>
-
+<button
+  onClick={() => {
+    const suggestion = getAISuggestion();
+    setScores(suggestion.map((n) => ({ score: n })));
+  }}
+  className="bg-green-500 w-full py-2 mt-2 rounded text-white hover:bg-green-600 transition"
+>
+  🤖 Get AI Suggestion
+</button>
       <div className="flex gap-2">
         <input
           type="number"
@@ -809,7 +844,6 @@ return (
         </button>
       </div>
     </motion.div>
-  </div>
   </div>
 );
 }
