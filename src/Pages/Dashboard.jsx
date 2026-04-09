@@ -571,49 +571,51 @@ const totalDonated = draws.reduce((sum, d) => {
 }, 0);
 // ================= UI =================
 return (
-  <div ref={dashboardRef}> {/* 🔥 NEW WRAPPER */}
+  <div ref={dashboardRef} className="relative min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
 
-    <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+    {/* 🔊 SOUND CONTROL */}
+    <div className="absolute top-4 right-4 flex flex-col items-end gap-2 z-50">
 
-  {/* 🔊 SOUND BUTTON */}
-  <button
-    onClick={() => {
-      if (isMusicPlaying) {
-        bgAudio.pause();
-        bgAudio.currentTime = 0;
-        setIsMusicPlaying(false);
-      } else {
-        bgAudio.play();
-        setIsMusicPlaying(true);
-      }
-    }}
-    className="bg-black/40 text-white px-3 py-1 rounded-full border border-white/20 text-sm"
-  >
-    {isMusicPlaying ? "🔊 ON" : "🔇 OFF"}
-  </button>
-
-  {/* 🎚️ VOLUME SLIDER */}
-  <input
-    type="range"
-    min="0"
-    max="1"
-    step="0.1"
-    value={volume}
-    onChange={(e) => {
-      const val = Number(e.target.value);
-      setVolume(val);
-      bgAudio.volume = val;
-    }}
-    className="w-20"
-  />
-
-</div>
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto bg-white/20 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20"
+      <button
+        onClick={() => {
+          if (isMusicPlaying) {
+            bgAudio.pause();
+            bgAudio.currentTime = 0;
+            setIsMusicPlaying(false);
+          } else {
+            bgAudio.play();
+            setIsMusicPlaying(true);
+          }
+        }}
+        className="bg-black/40 text-white px-3 py-1 rounded-full border border-white/20 text-sm"
       >
+        {isMusicPlaying ? "🔊 ON" : "🔇 OFF"}
+      </button>
+
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.1"
+        value={volume}
+        onChange={(e) => {
+          const val = Number(e.target.value);
+          setVolume(val);
+          bgAudio.volume = val;
+        }}
+        className="w-20"
+      />
+
+    </div>
+
+    {/* MAIN CARD */}
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="max-w-2xl mx-auto bg-white/20 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20"
+    >
+
 
 
       <h1 className="text-3xl font-bold text-white text-center">
