@@ -561,7 +561,7 @@ const { data: profileData } = await supabase
   .eq("id", user.id)
   .single();
 
-let finalCoins = profileData.coins;
+let finalCoins = profileData.coins ;
 
     let message = "";
     let prizeAmount = 0;
