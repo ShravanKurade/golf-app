@@ -573,6 +573,15 @@ if (matchCount === 5) {
   prizeAmount = 1500;
   setIsJackpot(true);
   playWin();
+  console.log("Jackpot Hit");
+  const { error: uploadError } = await supabase.storage
+  .from("proofs")
+  .upload(fileName, blob);
+
+if (uploadError) {
+  console.log("UPLOAD ERROR:", uploadError);
+  return;
+}
 
 } else if (matchCount === 4) {
   message = "🥈 4 Matches";
@@ -655,24 +664,38 @@ const drawId = drawData.id; // ✅ ID mil gaya
 
 // ✅ STEP 2: ONLY IF JACKPOT → SCREENSHOT
 if (matchCount === 5) {
+  console.log("JACKPOT HIT 🔥");
+
   const canvas = await html2canvas(dashboardRef.current);
   const image = canvas.toDataURL("image/png");
 
   const blob = await (await fetch(image)).blob();
   const fileName = `jackpot_${Date.now()}.png`;
 
-  await supabase.storage.from("proofs").upload(fileName, blob);
+  const { error: uploadError } = await supabase.storage
+    .from("proofs")
+    .upload(fileName, blob);
+
+  if (uploadError) {
+    console.log("UPLOAD ERROR:", uploadError);
+    return;
+  }
 
   const publicUrl = supabase
     .storage
     .from("proofs")
     .getPublicUrl(fileName).data.publicUrl;
 
-  // ✅ STEP 3: UPDATE DB
-  await supabase
+  console.log("IMAGE URL:", publicUrl);
+
+  const { error: updateError } = await supabase
     .from("draws")
     .update({ screenshot_url: publicUrl })
     .eq("id", drawId);
+
+  if (updateError) {
+    console.log("UPDATE ERROR:", updateError);
+  }
 }
 
     fetchHistory();
