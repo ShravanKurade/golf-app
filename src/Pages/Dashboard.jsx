@@ -480,11 +480,11 @@ const uploadProof = async (drawId) => {
   toast.success("Proof uploaded ✅");
   fetchHistory();
 };
-if (coins <= 0) {
+const runDraw = async () => {
+  if (coins <= 0) {
   setShowUpgradePopup(true);
   return;
 }
-const runDraw = async () => {
   if (subscription !== "active" && coins < 5) {
   setShowUpgradePopup(true);
   return;
