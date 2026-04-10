@@ -514,19 +514,41 @@ const runDraw = async () => {
     stopSpin(); // 🔇 stop spin sound
     bgAudio.volume = 0.3; // 🔥 ADD HERE
     // 🎯 FINAL NUMBERS
-    const drawNumbers = Array.from({ length: 5 }, () =>
-      Math.floor(Math.random() * 45) + 1
-    );
+    // 🎯 CONTROLLED LOGIC
+let matchCount;
 
-    setDisplayNumbers(drawNumbers);
-    setSpinning(false);
+const rand = Math.random();
 
-    const userNumbers = scores.map((s) => s.score);
+if (rand < 0.02) {
+  matchCount = 5;
+} else if (rand < 0.08) {
+  matchCount = 4;
+} else if (rand < 0.20) {
+  matchCount = 3;
+} else {
+  matchCount = Math.floor(Math.random() * 2);
+}
 
-    let matchCount = userNumbers.filter((n) =>
-      drawNumbers.includes(n)
-    ).length;
+// 🎯 USER NUMBERS
+const userNumbers = scores.map(s => s.score);
 
+// 🎯 GENERATE DRAW NUMBERS
+let drawNumbers = [...userNumbers];
+
+// shuffle
+drawNumbers.sort(() => 0.5 - Math.random());
+
+// keep required matches
+drawNumbers = drawNumbers.slice(0, matchCount);
+
+// fill remaining random
+while (drawNumbers.length < 5) {
+  const num = Math.floor(Math.random() * 45) + 1;
+  if (!drawNumbers.includes(num)) drawNumbers.push(num);
+}
+
+setDisplayNumbers(drawNumbers);
+    
     let message = "";
     let prize = "";
 
