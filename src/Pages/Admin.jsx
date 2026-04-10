@@ -236,13 +236,14 @@ const fetchDeletedUsers = async () => {
   setDeletedUsers(data || []);
 };
   const fetchDraws = async () => {
-    const { data } = await supabase
-      .from("draws")
-      .select("*")
-      .order("id", { ascending: false });
+  const { data } = await supabase
+    .from("draws")
+    .select("*")
+    .eq("is_flagged", true) // 🔥 ONLY IMPORTANT DRAWS
+    .order("id", { ascending: false });
 
-    setDraws(data || []);
-  };
+  setDraws(data || []);
+};
 
   const fetchUsersCount = async () => {
     const { count } = await supabase
@@ -572,6 +573,11 @@ const totalPool = activeUsers.length * 99 + jackpot;
   <div>
     <p className="font-semibold">
       🎯 {d.numbers} | Matches: {d.matches}
+      {d.is_flagged && (
+  <span className="text-yellow-300 ml-2 font-bold">
+    🚨 FLAGGED
+  </span>
+)}
     </p>
 
     <p className="text-sm mt-1">
