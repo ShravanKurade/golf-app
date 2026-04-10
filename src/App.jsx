@@ -1,3 +1,4 @@
+import Leaderboard from "./Pages/Leaderboard";
 import Charities from "./Pages/Charities";
 import CharityDetails from "./Pages/CharityDetails";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -57,6 +58,8 @@ function App() {
 
       <Routes>
 
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        
         {/* 🔥 LANDING PAGE */}
         <Route path="/" element={<Landing />} />
 

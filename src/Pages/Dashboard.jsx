@@ -160,7 +160,20 @@ function Dashboard() {
   };
 
   // ================= LATEST DRAW =================
-  
+  const fetchLatestDraw = async () => {
+  const user = await getUser();
+  if (!user) return;
+
+  const { data } = await supabase
+    .from("draws")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  setLatestDraw(data);
+};
 
   // ================= PROFILE =================
   async function fetchProfile() {
@@ -170,7 +183,7 @@ function Dashboard() {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("subscription_status, subscription_end, subscription_plan")
+      .select("subscription_status, subscription_end, subscription_plan,coins, last_played")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -291,7 +304,6 @@ if (user) {
       fetchScores();
       fetchHistory();
       fetchProfile();
-      fetchLatestDraw();
       fetchCharities();
       fetchUserDraws();
     }
