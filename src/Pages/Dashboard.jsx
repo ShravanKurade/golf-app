@@ -549,8 +549,12 @@ while (drawNumbers.length < 5) {
 
 setDisplayNumbers(drawNumbers);
     
+const { data: { user } } = await
+supabase.auth.getUser();
+
     let message = "";
-let prizeAmount = 0;
+    let prizeAmount = 0;
+    let coinReward = 0;
 
 // 🎯 PRIZE LOGIC
 if (matchCount === 5) {
@@ -563,6 +567,10 @@ if (matchCount === 5) {
   message = "🥈 4 Matches";
   prizeAmount = 500;
   playWin();
+  } else if (matchCount === 3) {
+  message = "🥉 3 Matches";
+  prizeAmount = 100; 
+  playWin();
 } else if (matchCount === 2) {
   message = "2 Matches";
   coinReward = 30;
@@ -571,10 +579,6 @@ if (matchCount === 5) {
 } else if (matchCount === 1) {
   message = "1 Match";
   coinReward = 15;
-  playWin();
-} else if (matchCount === 3) {
-  message = "🥉 3 Matches";
-  prizeAmount = 100; 
   playWin();
 
 } else {
@@ -589,17 +593,28 @@ const finalPrize = Math.floor(prizeAmount * (1 - charityPercent / 100));
 // 🎯 FINAL STRING
 const prize = `₹${finalPrize}`;
 
-// 🎁 COIN REWARD ADD
-if (coinReward > 0) {
-  await supabase
-    .from("profiles")
-    .update({
-      coins: coins + coinReward
-    })
-    .eq("id", user.id);
+// 💰 FINAL COINS CALCULATION
+let finalCoins = coins;
 
-  setCoins(coins + coinReward);
+// 🎁 add reward
+if (coinReward > 0) {
+  finalCoins += coinReward;
 }
+
+// 💸 subtract cost
+if (subscription === "active") {
+  finalCoins -= 3;
+} else {
+  finalCoins -= 5;
+}
+
+// ✅ UPDATE ONCE
+await supabase
+  .from("profiles")
+  .update({ coins: finalCoins })
+  .eq("id", user.id);
+
+setCoins(finalCoins);
 // 🎉 CONFETTI
 if (matchCount >= 3) {
   confetti({
@@ -609,9 +624,6 @@ if (matchCount >= 3) {
   });
 }
 // ✅ STEP 1: INSERT FIRST
-
-const { data: { user } } = await supabase.auth.getUser();
-
 const { data: drawData, error } = await supabase
   .from("draws")
   .insert([
