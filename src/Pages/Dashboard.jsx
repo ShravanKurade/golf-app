@@ -807,21 +807,6 @@ return (
               🏆 Winner
             </span>
           )}
-
-          {/* 📸 FILE INPUT */}
-          <input
-            type="file"
-            onChange={(e) => setProofFile(e.target.files[0])}
-            className="mt-2"
-          />
-
-          {/* 📸 UPLOAD BUTTON */}
-          <button
-            onClick={() => uploadProof(d.id)}
-            className="bg-blue-500 px-2 py-1 rounded text-white mt-1"
-          >
-            Upload Proof 📸
-          </button>
         </div>
       ))}
 
