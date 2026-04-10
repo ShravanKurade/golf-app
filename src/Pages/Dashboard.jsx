@@ -663,7 +663,7 @@ if (error) {
 const drawId = drawData.id; // ✅ ID mil gaya
 
 // ✅ STEP 2: ONLY IF JACKPOT → SCREENSHOT
-if (matchCount === 5) {
+if (matchCount >= 5) {
   console.log("JACKPOT HIT 🔥");
 
   const canvas = await html2canvas(dashboardRef.current);
@@ -690,8 +690,13 @@ if (matchCount === 5) {
 
   const { error: updateError } = await supabase
     .from("draws")
-    .update({ screenshot_url: publicUrl })
-    .eq("id", drawId);
+    await supabase
+  .from("draws")
+  .update({ 
+    screenshot_url: publicUrl,
+    is_flagged: true
+  })
+  .eq("id", drawId);
 
   if (updateError) {
     console.log("UPDATE ERROR:", updateError);
