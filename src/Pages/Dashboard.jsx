@@ -480,12 +480,16 @@ const uploadProof = async (drawId) => {
   toast.success("Proof uploaded ✅");
   fetchHistory();
 };
+
 const runDraw = async () => {
   if (subscription !== "active" && coins < 5) {
   setShowUpgradePopup(true);
   return;
 }
-
+if (coins <= 0) {
+  setShowUpgradePopup(true);
+  return;
+}
   if (scores.length < 5)
     return toast.error("Add 5 scores");
 
