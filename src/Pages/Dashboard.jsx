@@ -555,6 +555,14 @@ setDisplayNumbers(drawNumbers);
 const { data: { user } } = await
 supabase.auth.getUser();
 
+const { data: profileData } = await supabase
+  .from("profiles")
+  .select("coins")
+  .eq("id", user.id)
+  .single();
+
+let finalCoins = profileData.coins;
+
     let message = "";
     let prizeAmount = 0;
     let coinReward = 0;
@@ -576,12 +584,12 @@ if (matchCount === 5) {
   playWin();
 } else if (matchCount === 2) {
   message = "2 Matches";
-  coinReward = 30;
+  coinReward = 20;
   playWin();
 
 } else if (matchCount === 1) {
   message = "1 Match";
-  coinReward = 15;
+  coinReward = 10;
   playWin();
 
 } else {
@@ -596,8 +604,6 @@ const finalPrize = Math.floor(prizeAmount * (1 - charityPercent / 100));
 // 🎯 FINAL STRING
 const prize = `₹${finalPrize}`;
 
-// 💰 FINAL COINS CALCULATION
-let finalCoins = coins;
 
 // 🎁 add reward
 if (coinReward > 0) {
@@ -671,30 +677,6 @@ if (matchCount === 5) {
 
     fetchHistory();
     fetchLatestDraw();
-
-// 💎 PREMIUM USER
-if (subscription === "active") {
-  await supabase
-    .from("profiles")
-    .update({
-      coins: coins -3
-    })
-    .eq("id", user.id);
-
-  setCoins(coins - 3);
-}
-
-// 🟢 FREE USER
-else {
-  await supabase
-    .from("profiles")
-    .update({
-      coins: coins - 5
-    })
-    .eq("id", user.id);
-
-  setCoins(coins - 5);
-}
 
     toast.success("Draw Completed 🎉");
 
