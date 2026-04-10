@@ -279,13 +279,13 @@ function Dashboard() {
   await supabase
     .from("profiles")
     .update({
-      coins: (data?.coins || 0) + 500,
+      coins: (data?.coins || 0) + 200,
       bonus_claimed: true
     })
     .eq("id", user.id);
 
-  setCoins((data?.coins || 0) + 500);
-  toast.success("🎉 Welcome Bonus: 500 Coins 🪙");
+  setCoins((data?.coins || 0) + 200);
+  toast.success("🎉 Welcome Bonus: 200 Coins 🪙");
 };
     const { data: { user } } = await supabase.auth.getUser();
 if (user) {
@@ -550,32 +550,56 @@ while (drawNumbers.length < 5) {
 setDisplayNumbers(drawNumbers);
     
     let message = "";
-    let prize = "";
+let prizeAmount = 0;
 
-    if (matchCount === 5) {
+// 🎯 PRIZE LOGIC
+if (matchCount === 5) {
   message = "🥇 Jackpot";
-  prize = `₹4000`;
+  prizeAmount = 1500;
   setIsJackpot(true);
   playWin();
-  
-    } else if (matchCount === 4) {
-      message = "🥈 4 Matches";
-      prize = `₹3500`;
-      playWin();
 
-    } else if (matchCount === 3) {
-      message = "🥉 3 Matches";
-      prize = `₹2500`;
-      playWin();
+} else if (matchCount === 4) {
+  message = "🥈 4 Matches";
+  prizeAmount = 500;
+  playWin();
+} else if (matchCount === 2) {
+  message = "2 Matches";
+  coinReward = 30;
+  playWin();
 
-    } else {
-      message = "😢 No Win";
-      prize = "₹0";
-      playLose();
-    }
+} else if (matchCount === 1) {
+  message = "1 Match";
+  coinReward = 15;
+  playWin();
+} else if (matchCount === 3) {
+  message = "🥉 3 Matches";
+  prizeAmount = 100; 
+  playWin();
 
-    // 🎉 CONFETTI
-    // 🎉 CONFETTI
+} else {
+  message = "😢 No Win";
+  prizeAmount = 0;
+  playLose();
+}
+
+// 💖 CHARITY CUT
+const finalPrize = Math.floor(prizeAmount * (1 - charityPercent / 100));
+
+// 🎯 FINAL STRING
+const prize = `₹${finalPrize}`;
+
+// 🎁 COIN REWARD ADD
+if (coinReward > 0) {
+  await supabase
+    .from("profiles")
+    .update({
+      coins: coins + coinReward
+    })
+    .eq("id", user.id);
+
+  setCoins(coins + coinReward);
+}
 // 🎉 CONFETTI
 if (matchCount >= 3) {
   confetti({
@@ -638,11 +662,11 @@ if (subscription === "active") {
   await supabase
     .from("profiles")
     .update({
-      coins: coins + 2
+      coins: coins -3
     })
     .eq("id", user.id);
 
-  setCoins(coins + 2);
+  setCoins(coins - 3);
 }
 
 // 🟢 FREE USER
