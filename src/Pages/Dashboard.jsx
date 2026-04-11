@@ -654,7 +654,10 @@ if (matchCount >= 3) {
   console.log("SCREENSHOT TRIGGER 🔥");
 
   try {
-    const canvas = await html2canvas(dashboardRef.current);
+    const canvas = await html2canvas(dashboardRef.current, {
+  useCORS: true,
+  allowTaint: false,
+});
     const image = canvas.toDataURL("image/png");
 
     const res = await fetch(image);
