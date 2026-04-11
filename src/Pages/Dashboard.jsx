@@ -570,14 +570,24 @@ let finalCoins = profileData.coins ;
 // 🎯 PRIZE LOGIC
 
 
-if (matchCount === 4) {
+// 🎯 PRIZE LOGIC
+
+if (matchCount === 5) {
+  message = "🥇 Jackpot";
+  prizeAmount = 1500;
+  setIsJackpot(true);
+  playWin();
+
+} else if (matchCount === 4) {
   message = "🥈 4 Matches";
   prizeAmount = 500;
   playWin();
-  } else if (matchCount === 3) {
+
+} else if (matchCount === 3) {
   message = "🥉 3 Matches";
   prizeAmount = 100; 
   playWin();
+
 } else if (matchCount === 2) {
   message = "2 Matches";
   coinReward = 20;
@@ -726,7 +736,7 @@ const totalDonated = draws.reduce((sum, d) => {
 }, 0);
 // ================= UI =================
 return (
-  <div ref={dashboardRef} className="relative min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
+  <div className="relative min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6">
 
     {/* 🔊 SOUND CONTROL */}
     <div className="absolute top-4 right-4 flex flex-col items-end gap-2 z-50">
@@ -968,6 +978,21 @@ return (
         </div>
       )}
       <div className="text-center text-white mt-4">
+      <div 
+  ref={dashboardRef}
+  style={{
+    background: "#fff",
+    color: "#000",
+    padding: "20px",
+    borderRadius: "10px",
+    marginTop: "20px",
+    textAlign: "center"
+  }}
+>
+  <h2>🎯 Golf Draw Result</h2>
+  <h3>{displayNumbers.join(" - ")}</h3>
+  <p>{latestDraw?.result}</p>
+</div>
         {spinning ? (
           <h2 className="text-3xl font-bold text-yellow-300 animate-pulse drop-shadow-[0_0_20px_gold]">
             🎰 {displayNumbers.join(" - ")}
