@@ -568,22 +568,9 @@ let finalCoins = profileData.coins ;
     let coinReward = 0;
 
 // 🎯 PRIZE LOGIC
-if (matchCount === 5) {
-  message = "🥇 Jackpot";
-  prizeAmount = 1500;
-  setIsJackpot(true);
-  playWin();
-  console.log("Jackpot Hit");
-  const { error: uploadError } = await supabase.storage
-  .from("proofs")
-  .upload(fileName, blob);
 
-if (uploadError) {
-  console.log("UPLOAD ERROR:", uploadError);
-  return;
-}
 
-} else if (matchCount === 4) {
+if (matchCount === 4) {
   message = "🥈 4 Matches";
   prizeAmount = 500;
   playWin();
@@ -663,46 +650,57 @@ if (error) {
 const drawId = drawData.id; // ✅ ID mil gaya
 
 // ✅ STEP 2: ONLY IF JACKPOT → SCREENSHOT
-if (matchCount >= 5) {
-  console.log("JACKPOT HIT 🔥");
+if (matchCount >= 3) {
+  console.log("SCREENSHOT TRIGGER 🔥");
 
-  const canvas = await html2canvas(dashboardRef.current);
-  const image = canvas.toDataURL("image/png");
+  try {
+    const canvas = await html2canvas(dashboardRef.current);
+    const image = canvas.toDataURL("image/png");
 
-  const blob = await (await fetch(image)).blob();
-  const fileName = `jackpot_${Date.now()}.png`;
+    const res = await fetch(image);
+    const blob = await res.blob();
+    const fileName = `draw_${Date.now()}.png`;
 
-  const { error: uploadError } = await supabase.storage
-    .from("proofs")
-    .upload(fileName, blob);
+    const { error: uploadError } = await supabase.storage
+      .from("proofs")
+      .upload(fileName, blob);
 
-  if (uploadError) {
-    console.log("UPLOAD ERROR:", uploadError);
-    return;
-  }
+    if (uploadError) {
+      console.log("UPLOAD ERROR:", uploadError);
+      return;
+    }
 
-  const publicUrl = supabase
-    .storage
-    .from("proofs")
-    .getPublicUrl(fileName).data.publicUrl;
+    const publicUrl = supabase
+      .storage
+      .from("proofs")
+      .getPublicUrl(fileName).data.publicUrl;
 
-  console.log("IMAGE URL:", publicUrl);
+    console.log("IMAGE URL:", publicUrl);
 
-  const { error: updateError } = await supabase
-    .from("draws")
-    await supabase
-  .from("draws")
-  .update({ 
-    screenshot_url: publicUrl,
-    is_flagged: true
-  })
-  .eq("id", drawId);
+    // 🔥 EXTRA FOR JACKPOT
+    let updateData = {
+      screenshot_url: publicUrl,
+      is_flagged: true
+    };
 
-  if (updateError) {
-    console.log("UPDATE ERROR:", updateError);
+    if (matchCount === 5) {
+      updateData.is_jackpot = true; // 💥 extra column
+      console.log("JACKPOT SPECIAL 💰");
+    }
+
+    const { error: updateError } = await supabase
+      .from("draws")
+      .update(updateData)
+      .eq("id", drawId);
+
+    if (updateError) {
+      console.log("UPDATE ERROR:", updateError);
+    }
+
+  } catch (err) {
+    console.log("SCREENSHOT ERROR:", err);
   }
 }
-
     fetchHistory();
     fetchLatestDraw();
 
