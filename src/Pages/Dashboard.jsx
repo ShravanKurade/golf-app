@@ -664,10 +664,14 @@ if (matchCount >= 3) {
   console.log("SCREENSHOT TRIGGER 🔥");
 
   try {
+    // ⏳ wait for UI update
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     const canvas = await html2canvas(dashboardRef.current, {
-  useCORS: true,
-  allowTaint: false,
-});
+      useCORS: true,
+      allowTaint: false,
+    });
+
     const image = canvas.toDataURL("image/png");
 
     const res = await fetch(image);
@@ -690,25 +694,19 @@ if (matchCount >= 3) {
 
     console.log("IMAGE URL:", publicUrl);
 
-    // 🔥 EXTRA FOR JACKPOT
     let updateData = {
       screenshot_url: publicUrl,
       is_flagged: true
     };
 
     if (matchCount === 5) {
-      updateData.is_jackpot = true; // 💥 extra column
-      console.log("JACKPOT SPECIAL 💰");
+      updateData.is_jackpot = true;
     }
 
-    const { error: updateError } = await supabase
+    await supabase
       .from("draws")
       .update(updateData)
       .eq("id", drawId);
-
-    if (updateError) {
-      console.log("UPDATE ERROR:", updateError);
-    }
 
   } catch (err) {
     console.log("SCREENSHOT ERROR:", err);
